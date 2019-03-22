@@ -1,0 +1,7 @@
+# little guys
+alias g='google'
+alias t='tryhard'
+alias T='tryharder'
+alias v='tryharder -r vim'
+alias V='tryhard vim'
+alias pm='sudo pacman'

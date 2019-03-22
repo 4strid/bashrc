@@ -1,0 +1,13 @@
+#
+# bashrc/danger
+#
+# things that could hurt people
+#
+
+alias timer='time'
+alias time='date +%l:%M%P'
+
+# good night
+alias restart='shutdown -r now'
+alias shutdown='shutdown now'
+alias suspend='systemctl suspend'

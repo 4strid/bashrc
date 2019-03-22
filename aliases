@@ -1,0 +1,26 @@
+#
+# bashrc/aliases
+#
+
+# convenience
+alias ls='cat_or_ls'
+alias la='$LS -a'
+alias lsl='$LS -l -h'
+alias lsd='$LS --group-directories-first'
+alias cd='cd+'
+alias cat='cat_or_ls'
+alias info='info --vi-keys'
+alias lynx='lynx --session ~/.lynxsession'
+alias systemctl='sudo systemctl'
+alias wifi='nmcli device wifi'
+alias conn='nmcli con'
+alias cmdlist='compgen -A function -abck'
+alias backlight='light -S'
+alias tryharder='tryhard -g'
+
+# x gon give it to ya
+alias xchromium='xinit /usr/bin/chromium'
+
+# rc
+alias vimrc='vim ~/.vimrc'
+alias xinitrc='vim ~/.xinitrc'
