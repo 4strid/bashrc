@@ -108,16 +108,16 @@ EOF
 
   _try () {
     for T in $@ ; do
-      TT="$TARGET ${T}/${TARGET}"
+      TT="${TARGET} ${T}/${TARGET}"
       # "//" just kind of bugs me lol
       [[ $T == "/" ]] && TT="/$TARGET"
       (( $GLOB )) && TT="${TT}*"
       (( $VERBOSE >= 2 )) && {
         echo "DEBUG T $T"
-        echo "DEBUG TG $TG"
         echo "DEBUG TT $TT"
       }
       for TG in $TT ; do
+		(( $VERBOSE >= 2 )) && echo "DEBUG TG $TG"
         if (( $DIRS )); then
           if [[ -d "$TG" ]]; then
             (( $VERBOSE )) && [[ $TG != $TARGET ]] && echo "$TG"
@@ -139,14 +139,14 @@ EOF
         local -a SUBS
         if [[ -d $T ]]; then
           SUBS+=("$T/*/")
-          _try ${SUBS[@]}
+          _try "${SUBS[@]}"
           [[ $DONE ]] && return $DONE
         fi
       fi
     done
   }
 
-  _try ${TRY[@]}
+  _try "${TRY[@]}"
   [[ $DONE ]] && return $DONE
 
   # didn't find it; let CMD print an appropriate error message
@@ -231,7 +231,7 @@ cd+ () {
   [[ _CD_MOD_PRE ]] && PRE+=(${_CD_MOD_PRE[@]})
   [[ _CD_MOD_POST ]] && POST+=(${_CD_MOD_POST[@]})
 
-  ${PRE[@]} cd $DEST && {
+  ${PRE[@]} cd "$DEST" && {
     local -a CMD
     local DONE=
     for FRAG in ${POST[@]} ; do
@@ -243,7 +243,6 @@ cd+ () {
         CMD=()
       fi
     done
-    ${CMD[@]}
   } 
 }
 
