@@ -12,5 +12,6 @@ red=$'\e[1;31m'
 pink=$'\e[1;35m'
 purple=$'\e[0;35m'
 reset=$'\e[0m'
+green=$'\e[1;32m'
 
-export PS1=$'\[${red}\]`ok`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \w]`inception`\[${reset}\]$ '
+export PS1=$'\[${green}\]`whereami`\[${red}\]`ok`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \w]`inception`\[${reset}\]$ '

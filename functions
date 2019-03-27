@@ -337,43 +337,44 @@ lib: () {
   tryhard -D "$HOME/lib" ls $1
 }
 
-#(Disc|C)harging, 
-
 _bat_match () {
   [[ `acpi -i` =~ (Discharging|Charging|Unknown|Not charging),\ ([0-9]{1,3})%.*(remaining|until\ charged|.) ]]
 }
 
+# acpi don't work so we'll just grab the info manually
 batcolor () {
-  _bat_match
-  local CHARGE=${BASH_REMATCH[1]}
-  local NUM=${BASH_REMATCH[2]}
-  # hardcoded to pink for now
+  local CHARGE=`cat /sys/class/power_supply/battery/status`
+  local NUM=`cat /sys/class/power_supply/battery/capacity`
+ 	# hardcoded to pink for now
   local COLOR=$'\033[1;35m'
-  [[ $BASH_REMATCH ]] && {
-    if [[ $CHARGE == Discharging ]]; then
-      if (( $NUM <= 10 )); then
-        COLOR=$'\033[1;31m'
-      elif (( $NUM <= 42 )); then
-        COLOR=$'\033[1;33m'
-      else
-        COLOR=$'\033[1;32m'
-      fi
-    elif [[ $CHARGE == 'Unknown' ]]; then
-      COLOR=$'\033[0;35m'
-    else
-      if (( $NUM <= 75 )); then
-        COLOR=$'\033[1;34m'
-      fi
-    fi
-  }
+	if [[ $CHARGE == Discharging ]]; then
+		if (( $NUM <= 10 )); then
+			COLOR=$'\033[1;31m'
+		elif (( $NUM <= 42 )); then
+			COLOR=$'\033[1;33m'
+		else
+			COLOR=$'\033[1;32m'
+		fi
+	elif [[ $CHARGE == 'Unknown' ]]; then
+		COLOR=$'\033[0;35m'
+	else
+		if (( $NUM <= 75 )); then
+			COLOR=$'\033[1;34m'
+		fi
+	fi
   echo $COLOR
 }
 
 bat () {
-  _bat_match
-  local MSG=$BASH_REMATCH
-  [[ ! $MSG ]] && MSG=`acpi -i`
+  local CHARGE=`cat /sys/class/power_supply/battery/status`
+  local NUM=`cat /sys/class/power_supply/battery/capacity`
+	local MSG="$CHARGE $NUM%"
   local RESET=$'\033[0m'
 
   echo `batcolor`${MSG}${RESET}
+}
+
+whereami () {
+	git branch 2>/dev/null | grep -Ex "\*(.*)"
+	return 0
 }
