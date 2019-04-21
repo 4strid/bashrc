@@ -338,17 +338,19 @@ lib: () {
 
 #(Disc|C)harging, 
 
-_bat_match () {
-  [[ `acpi -i` =~ (Discharging|Charging|Unknown|Not charging),\ ([0-9]{1,3})%.*(remaining|until\ charged|.) ]]
-}
+#_bat_match () {
+#  [[ `acpi -i` =~ (Discharging|Charging|Unknown|Not charging),\ ([0-9]{1,3})%.*(remaining|until\ charged|.) ]]
+#}
 
 batcolor () {
-  _bat_match
-  local CHARGE=${BASH_REMATCH[1]}
-  local NUM=${BASH_REMATCH[2]}
+  #_bat_match 
+  #local CHARGE=${BASH_REMATCH[1]}
+  #local NUM=${BASH_REMATCH[2]}
+  local NUM=`cat /sys/class/power_supply/battery/capacity`
+  local CHARGE=`cat /sys/class/power_supply/battery/status`
   # hardcoded to pink for now
   local COLOR=$'\033[1;35m'
-  [[ $BASH_REMATCH ]] && {
+  #[[ $BASH_REMATCH ]] && {
     if [[ $CHARGE == Discharging ]]; then
       if (( $NUM <= 10 )); then
         COLOR=$'\033[1;31m'
@@ -364,15 +366,16 @@ batcolor () {
         COLOR=$'\033[1;34m'
       fi
     fi
-  }
+  #}
   echo $COLOR
 }
 
 bat () {
-  _bat_match
-  local MSG=$BASH_REMATCH
+  #_bat_match
+  local NUM=`cat /sys/class/power_supply/battery/capacity`
+  local CHARGE=`cat /sys/class/power_supply/battery/status`
+  local MSG="$NUM $CHARGE"
   [[ ! $MSG ]] && MSG=`acpi -i`
   local RESET=$'\033[0m'
-
   echo `batcolor`${MSG}${RESET}
 }
