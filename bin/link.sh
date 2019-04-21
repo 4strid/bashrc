@@ -1,7 +1,7 @@
 [[ ! -f $HOME/.cutestrap ]] && cat > $HOME/.cutestrap <<EOF
 #!/bin/bash
 # cutestrap
-# this suffices to load cute-ils or cutejs bashrc
+# this suffices to load cute-ils or cutejs' bashrc
 
 function import {
   local OPT=
@@ -26,20 +26,12 @@ function import {
 }
 EOF
 
+[[ ! -d $HOME/lib ]] && mkdir "$HOME/lib"
+
 BINPATH="$(dirname "$(realpath "$0")")"
 INSTALLPATH="$HOME/lib/bashrc"
 
-if [[ $BINPATH == "$INSTALLPATH/bin" ]]; then {
-  echo "Oh good I'm already in the right place."
-} elif [[ $BINPATH == "$(realpath "$HOME/src/bashrc/bin")" ]]; then {
-  echo "Sure, you can keep me in ~/src, fine by me"
-} else {
-  [[ ! -d $HOME/lib ]] && mkdir "$HOME/lib"
-  [[ ! -d $HOME/lib/bashrc ]] && mkdir "$HOME/lib/bashrc"
-  cd $BINPATH
-  cd ..
-  cp aliases exports shopts bashrc danger functions reflect shortcuts $INSTALLPATH
-} fi
+ln -s $BINPATH/.. -T $INSTALLPATH
 
 if [[ ! -f $HOME/.bashrc ]]; then
   cat >> $HOME/.bashrc <<EOF
