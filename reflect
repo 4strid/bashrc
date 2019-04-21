@@ -22,7 +22,7 @@ _reflect_edit () {
   local OLD_CDMOD_PRE="$_CD_MOD_PRE"
   local OLD_CDMOD_POST="$_CD_MOD_POST"
   #cdmod -p -P
-  tryharder vim -S `lib: set_ft_sh.vim` $JUMP bashrc/$SECTION
+  tryharder vim -S $HOME/src/bashrc/.bashvimrc $JUMP bashrc/$SECTION
   #cdmod -p $OLD_CDMOD_PRE -P $OLD_CDMOD_POST
 }
 
