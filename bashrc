@@ -8,7 +8,7 @@
 # 2019-01-21
 #
 
-# do not print bashrc directory 100 times
+# disable cd mods while loading bashrc
 cdmod -p -P 2> /dev/null
 
 import -v functions
