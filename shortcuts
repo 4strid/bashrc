@@ -1,7 +1,7 @@
 # little guys
 alias g='google'
 alias t='tryhard'
-alias T='tryharder'
-alias v='tryharder -r vim'
+alias T='tryhard -g -r'
+alias v='tryhard -g -r vim'
 alias V='tryhard vim'
 alias pm='sudo pacman'

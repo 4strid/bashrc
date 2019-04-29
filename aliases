@@ -16,7 +16,8 @@ alias wifi='nmcli device wifi'
 alias conn='nmcli con'
 alias cmdlist='compgen -A function -abck'
 alias backlight='light -S'
-alias tryharder='tryhard -g'
+alias spelunk='tryhard -r -D . cd'
+alias deepvim='tryhard -r -D . vim'
 
 # x gon give it to ya
 alias xchromium='xinit /usr/bin/chromium'

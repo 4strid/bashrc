@@ -16,18 +16,19 @@ _reflect_edit () {
   if [[ $JUMP ]]; then
     if [[ $SECTION == f* ]]; then
       JUMP="+/^${JUMP}"
-    else JUMP="+/${JUMP}"
+    else
+      JUMP="+/${JUMP}"
     fi
   fi
   local OLD_CDMOD_PRE="$_CD_MOD_PRE"
   local OLD_CDMOD_POST="$_CD_MOD_POST"
   #cdmod -p -P
-  tryharder vim -S $HOME/src/bashrc/.bashvimrc $JUMP bashrc/$SECTION
+  tryhard -g vim -S $HOME/src/bashrc/.bashvimrc $JUMP bashrc/$SECTION
   #cdmod -p $OLD_CDMOD_PRE -P $OLD_CDMOD_POST
 }
 
 _reflect_source () {
-  tryharder source "bashrc/$1"
+  tryhard -g source "bashrc/$1"
 }
 
 bashrc () {

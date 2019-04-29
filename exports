@@ -6,12 +6,14 @@ export LS='ls --color=auto'
 export CD='cd'
 export CAT='cat'
 # red stderr >:)
+# TODO: set-add to avoid infinitely growing LD_PRELOAD
 export LD_PRELOAD="/usr/lib/libstderred.so${LD_PRELOAD:+:$LD_PRELOAD}"
 
-red=$'\e[1;31m'
-pink=$'\e[1;35m'
-purple=$'\e[0;35m'
-reset=$'\e[0m'
-green=$'\e[1;32m'
+export RED=$'\e[1;31m'
+export PINK=$'\e[1;35m'
+export PURPLE=$'\e[0;35m'
+export RESET=$'\e[0m'
+export GREEN=$'\e[1;32m'
+export STYLISH=$PINK
 
 export PS1=$'\[${green}\]`whereami`\[${red}\]`ok`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \w]`inception`\[${reset}\]$ '
