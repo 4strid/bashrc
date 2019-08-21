@@ -9,7 +9,8 @@
 #
 
 # disable cd mods while loading bashrc
-cdmod -p -P 2> /dev/null
+# (fails on first run so ignore stderr)
+cdmod -p -P 2>/dev/null
 
 import -v functions
 import -v exports

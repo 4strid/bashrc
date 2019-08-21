@@ -2,21 +2,32 @@
 # bashrc/aliases
 #
 
-# convenience
+# i mix these up all the time ok?...
+alias cd='cd_or_vim'
+alias vim='vim_or_cd'
+alias cat='cat_or_ls'
 alias ls='cat_or_ls'
+# ls variants
 alias la='$LS -a'
 alias lsl='$LS -l -h'
 alias lsd='$LS --group-directories-first'
-alias cd='cd+'
-alias cat='cat_or_ls'
+# defaults
 alias info='info --vi-keys'
 alias lynx='lynx --session ~/.lynxsession'
+alias grep='grep --exclude-dir=.git --exclude-dir=node_modules'
+# system
 alias systemctl='sudo systemctl'
 alias wifi='nmcli device wifi'
 alias conn='nmcli con'
 alias cmdlist='compgen -A function -abck'
 alias backlight='light -S'
+
+# try hard
 alias tryharder='tryhard -g'
+alias dive='tryhard -r vim_or_cd'
+
+# cute
+alias clock='tty-clock -s -t -c'
 
 # x gon give it to ya
 alias xchromium='xinit /usr/bin/chromium'

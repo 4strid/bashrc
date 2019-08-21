@@ -22,6 +22,7 @@ tryhard () {
   local RECURSE=0
   local VERBOSE=0
   local GLOB=0
+  local MULTI=0
 
   local -a _TRY_COMMON=("$HOME" "/")
   local -a _TRY_CFG=("/etc")
@@ -30,41 +31,47 @@ tryhard () {
   [[ -e $HOME/.tryhardrc ]] && source $HOME/.tryhardrc
 
   OPTIND=1
-  while getopts "fdaD:ceurgvVh" OPT; do
+  while getopts "fdaD:ceuUrgmvVh" OPT; do
     case $OPT in
-      f) FILES=1; DIRS=0 # files
-	;;
-      d) FILES=0; DIRS=1 #directories
+    f) FILES=1; DIRS=0 # files
+      ;;
+    d) FILES=0; DIRS=1 #directories
+      ;;
+    a) FILES=1; DIRS=1 # all
+      ;;
+    D)
+      TRY=("$OPTARG")
+      ;;
+    c)
+      TRY+=("${_TRY_COMMON[@]}")
+      ;;
+    e)
+      TRY+=("${_TRY_CFG[@]}")
         ;;
-      a) FILES=1; DIRS=1 # all
-        ;;
-      D)
-        TRY=("${OPTARG[@]}")
-        ;;
-      c)
-        TRY+=("${_TRY_COMMON[@]}")
-        ;;
-      e)
-	TRY+=("${_TRY_CFG[@]}")
-        ;;
-      u)
-        TRY+=("..")
-	;;
-      r)
-	RECURSE=1
-        [[ ! $TRY ]] && TRY=(".")
-	;;
-      g)
-        GLOB=1
-        ;;
-      v)
-        VERBOSE=1
-        ;;
-      V)
-        VERBOSE=2
-        ;;
-      h)
-        cat <<EOF
+    u)
+      TRY+=("..")
+      ;;
+    U)
+      TRY+=(".." "../.." "../../..")
+      ;;
+    r)
+      RECURSE=1
+      [[ ! $TRY ]] && TRY=(".")
+      ;;
+    g)
+      GLOB=1
+      ;;
+    m)
+      MULTI=1
+      ;;
+    v)
+      VERBOSE=1
+      ;;
+    V)
+      VERBOSE=2
+      ;;
+    h)
+      cat <<EOF
 usage: tryhard CMD TARGET
 
   Options:
@@ -74,10 +81,12 @@ usage: tryhard CMD TARGET
    [-c]      Search in common places (by default . ~ and /)
     -e       Search in configuration places (by default /etc)
     -u       Search up one parent directory
+    -U       Search up to 3 levels of parent directories
     -r       Recursively search. If search directory is not explicitly
               provided, starts in current working directory
     -g       Adds a glob star to the end of TARGET
     -D DIR   Use DIR as base search directory
+    -m       Perform CMD on all found TARGETs rather than stopping at the first one
     -v       Prints full path of resolved target
     -V       Prints full path of resolved target and debug information
     -h       Print this help message
@@ -85,13 +94,12 @@ usage: tryhard CMD TARGET
   Files:
     ~/.tryhardrc Specify default directories to search by setting
     _TRY_COMMON for -c (default) and _TRY_CFG for -e flags
-
 EOF
-	;;
-      ?)
-	# moving on
-	;;
-     esac
+      ;;
+    ?)
+  # moving on
+      ;;
+    esac
   done
   shift $(($OPTIND - 1))
 
@@ -113,25 +121,25 @@ EOF
       [[ $T == "/" ]] && TT="/$TARGET"
       (( $GLOB )) && TT="${TT}*"
       (( $VERBOSE >= 2 )) && {
-        echo "DEBUG T $T"
-        echo "DEBUG TT $TT"
+        echo "DEBUG T $T" 1>&2 
+        echo "DEBUG TT $TT" 1>&2
       }
       for TG in $TT ; do
-		(( $VERBOSE >= 2 )) && echo "DEBUG TG $TG"
+        (( $VERBOSE >= 2 )) && echo "DEBUG TG $TG" 1>&2
         if (( $DIRS )); then
           if [[ -d "$TG" ]]; then
-            (( $VERBOSE )) && [[ $TG != $TARGET ]] && echo "$TG"
+            (( $VERBOSE )) && [[ $TG != $TARGET ]] && echo "$TG" 1>&2
             $CMD "$TG"
             DONE=$?
-            return $DONE
+            (( $MULTI )) || return $DONE
           fi
         fi
         if (( $FILES )); then
           if [[ -f "$TG" ]]; then
-            (( $VERBOSE )) && [[ $TG != $TARGET ]] && echo "$TG";
+            (( $VERBOSE )) && [[ $TG != $TARGET ]] && echo "$TG" 1>&2
             $CMD "$TG"
             DONE=$?
-            return $DONE
+            (( $MULTI )) || return $DONE
           fi
         fi
       done
@@ -140,7 +148,9 @@ EOF
         if [[ -d $T ]]; then
           SUBS+=("$T/*/")
           _try "${SUBS[@]}"
-          [[ $DONE ]] && return $DONE
+          (( $MULTI )) || {
+            [[ $DONE ]] && return $DONE
+          }
         fi
       fi
     done
@@ -152,6 +162,68 @@ EOF
   # didn't find it; let CMD print an appropriate error message
   $CMD "$TARGET";
 }
+
+# tryfind ()
+#
+# like find or locate but using tryhard mechanics
+# 
+# Usage: tryfind [OPTIONS] TARGET [...TARGETS]
+#
+# (shoutouts to GNU sort <3)
+#
+# cutejs (Astrid Fesz-Nguyen)
+# 2019-08-20
+
+tryfind () {
+  local TYPE=
+  local BASEDIR=
+  local MULTI="-m"
+  local RECURSE="-r"
+  local GLOB=
+  local UP=
+  local VERBOSE=
+  OPTIND=1
+  while getopts "fdaD:1RguUvVh" OPT; do
+    case $OPT in
+      f) TYPE="-f" ;;
+      d) TYPE="-d" ;;
+      a) TYPE="-a" ;;
+      D) BASEDIR="-D $OPTARG";;
+      1) MULTI="" ;;
+      g) GLOB="-g" ;;
+      R) RECURSE="" ;;
+      v) VERBOSE="-v" ;;
+      V) VERBOSE="-V" ;;
+      h) cat <<EOF
+Usage: tryfind [options] TARGET [...TARGETS]
+
+Options:
+  -f   Search only for files
+  -d   Search only for directories 
+  -D   Base directory to search in
+  -1   Only return first match
+  -R   Do not recursively search subdirectories 
+  -g   Add globstar to the end of filename
+  -u   Also search directory above
+  -U   Also search up to 3 directories above
+  -v   Print all search paths 
+  -h   Print this help message
+
+See also: tryhard on which this is based
+EOF
+      return 0
+      ;;
+    ?)
+      ;;
+    esac
+  done
+  shift $(($OPTIND -1))
+
+  local FLAGS="$TYPE $MULTI $RECURSE $GLOB $VERBOSE"
+
+  tryhard "$BASEDIR" $FLAGS ls -d -1 "$@" | sed 's/[ \t]*$//' | sort -u
+}
+
 
 # inception ()
 #
@@ -243,7 +315,7 @@ cd+ () {
         CMD=()
       fi
     done
-	[[ $CMD ]] && ${CMD[@]}
+  [[ $CMD ]] && ${CMD[@]}
   } 
 }
 
@@ -272,7 +344,7 @@ cdmod () {
       '-p')
         VAR=pre
         PRE=()
-	;;
+  ;;
       '-P')
         VAR=post
         POST=()
@@ -319,7 +391,7 @@ EOF
 }
 
 cat_or_ls () {
-  # this admittedly acts weird if you typed just 'cat`, but I can just use $CAT
+  # this admittedly acts weird if you call just `cat', but I can just use $CAT
   if [[ ! $1 ]] || [[ $1 = -* ]]; then
     $LS "$@"
   elif [[ -d $1 ]]; then
@@ -332,9 +404,43 @@ cat_or_ls () {
   fi
 }
 
-lib: () {
-  local -a TRY=("$HOME/lib" "$HOME/src")
-  tryhard -D "$HOME/lib" ls $1
+vim_or_cd () {
+  if [[ ! $1 ]]; then
+  $EDITOR
+  elif [[ -f $1 ]]; then
+    $EDITOR "$@"
+  elif [[ -d $1 ]]; then
+  cd+ $1
+  else
+    echo "$1: Not a file or directory" 1>&2
+    return 127
+  fi
+}
+
+cd_or_vim () {
+  if [[ ! $1 ]]; then
+  cd+
+  elif [[ -f $1 ]]; then
+    $EDITOR "$@"
+  else
+  cd+ "$1"
+  fi
+}
+
+lib () {
+  local FOUND=`\
+    tryhard -r ls lib 2>/dev/null ||\
+    tryhard -U ls lib 2>/dev/null ||\
+  `
+  [[ $FOUND ]] && cd $FOUND
+}
+
+src () {
+  local FOUND=`\
+    tryhard -r ls src 2>/dev/null ||\
+    tryhard -U ls src 2>/dev/null ||\
+  `
+  [[ $FOUND ]] && cd $FOUND
 }
 
 #(Disc|C)harging, 
@@ -376,4 +482,13 @@ bat () {
   local RESET=$'\033[0m'
 
   echo `batcolor`${MSG}${RESET}
+}
+
+#
+# bash/git integration that's "good enough"
+#
+# 2019-08-19
+
+whatbranch ()  {
+  git branch 2>/dev/null | grep -s --no-filename '*' || true
 }

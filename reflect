@@ -2,10 +2,8 @@
 # bashrc/reflect
 #
 # self editing bashrc
-#
-# I had big plans for this but I'm sick of shell scripting lol
-#
-# I'll come back to it later
+# "I write shell scripts to write my shell scripts"
+# 
 
 alias sob="source $HOME/.bashrc"
 
@@ -13,22 +11,33 @@ _reflect_edit () {
   local SECTION=$1
   local JUMP=$2
 
+  # absolute nonsense: if searching file `functions' we want to land on the definition
+  # not the preceding block comment. otherwise we want to search anywhere in the line
   if [[ $JUMP ]]; then
     if [[ $SECTION == f* ]]; then
       JUMP="+/^${JUMP}"
     else JUMP="+/${JUMP}"
     fi
   fi
-  local OLD_CDMOD_PRE="$_CD_MOD_PRE"
-  local OLD_CDMOD_POST="$_CD_MOD_POST"
-  #cdmod -p -P
-  tryharder vim -S `lib: set_ft_sh.vim` $JUMP bashrc/$SECTION
-  #cdmod -p $OLD_CDMOD_PRE -P $OLD_CDMOD_POST
+  tryhard -D "$HOME/lib $HOME/src" -g\
+	vim -S `tryfind -1 -R -D "$HOME $HOME/lib/bashrc $HOME/src/bashrc" lib/set_ft_sh.vim`\ $JUMP bashrc/$SECTION
 }
 
 _reflect_source () {
-  tryharder source "bashrc/$1"
+  tryhard -D "$HOME/lib $HOME/src" -g source "bashrc/$1"
 }
+
+# bashrc ()
+# 
+# edit any section of bashrc and immediately apply it
+# to the current shell
+#
+# Usage: bashrc [-s] [section]
+#   -s sources the file
+#   otherwise edits then sources
+# 
+# cutejs (Astrid Fesz-Nguyen)
+# 2019-02-23
 
 bashrc () {
   if [[ $1 == "-s" ]]; then

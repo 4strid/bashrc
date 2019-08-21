@@ -30,9 +30,7 @@ BINPATH="$(dirname "$(realpath "$0")")"
 INSTALLPATH="$HOME/lib/bashrc"
 
 if [[ $BINPATH == "$INSTALLPATH/bin" ]]; then {
-  echo "Oh good I'm already in the right place."
-} elif [[ $BINPATH == "$(realpath "$HOME/src/bashrc/bin")" ]]; then {
-  echo "Sure, you can keep me in ~/src, fine by me"
+  echo "Oh good I'm already in the right place." 1>&2
 } else {
   [[ ! -d $HOME/lib ]] && mkdir "$HOME/lib"
   [[ ! -d $HOME/lib/bashrc ]] && mkdir "$HOME/lib/bashrc"
@@ -53,16 +51,14 @@ EOF
 elif grep -q "import bashrc/bashrc" $HOME/.bashrc; then
  echo "Looks like ~/.bashrc is already set up"
 else
-  cp $HOME/.bashrc $HOME/.bashrc.orig
   cat > $HOME/.bashrc.bootstrap <<EOF
-# ~/.bashrc
-#
 # cutejs/bashrc
 
 source \$HOME/.cutestrap
 import bashrc/bashrc
 
 EOF
-  cat $HOME/.bashrc.bootstrap $HOME/.bashrc.orig > $HOME/.bashrc
+  cp $HOME/.bashrc $HOME/.bashrc.orig
+  cat $HOME/.bashrc.orig $HOME/.bashrc.bootstrap > $HOME/.bashrc
   rm $HOME/.bashrc.bootstrap $HOME/.bashrc.orig
 fi

@@ -5,12 +5,14 @@ export PATH=$HOME/bin:$PATH:$HOME/.npm/packages/bin
 export LS='ls --color=auto'
 export CD='cd'
 export CAT='cat'
+export EDITOR='vim'
 # red stderr >:)
 export LD_PRELOAD="/usr/lib/libstderred.so${LD_PRELOAD:+:$LD_PRELOAD}"
 
 red=$'\e[1;31m'
 pink=$'\e[1;35m'
 purple=$'\e[0;35m'
+green=$'\e[0;32m'
 reset=$'\e[0m'
 
-export PS1=$'\[${red}\]`ok`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \w]`inception`\[${reset}\]$ '
+export PS1=$'\[${red}\]`ok`\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \w]`inception`\[${reset}\]$ '

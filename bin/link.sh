@@ -43,18 +43,16 @@ source \$HOME/.cutestrap
 import bashrc/bashrc
 EOF
 elif grep -q "import bashrc/bashrc" $HOME/.bashrc; then
- echo "Looks like ~/.bashrc is already set up"
+ echo "Looks like ~/.bashrc is already set up" 1>&2
 else
-  cp $HOME/.bashrc $HOME/.bashrc.orig
   cat > $HOME/.bashrc.bootstrap <<EOF
-# ~/.bashrc
-#
 # cutejs/bashrc
 
 source \$HOME/.cutestrap
 import bashrc/bashrc
 
 EOF
+  cp $HOME/.bashrc $HOME/.bashrc.orig
   cat $HOME/.bashrc.bootstrap $HOME/.bashrc.orig > $HOME/.bashrc
   rm $HOME/.bashrc.bootstrap $HOME/.bashrc.orig
 fi
