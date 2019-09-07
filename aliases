@@ -17,10 +17,14 @@ alias lynx='lynx --session ~/.lynxsession'
 alias grep='grep --exclude-dir=.git --exclude-dir=node_modules'
 # system
 alias systemctl='sudo systemctl'
+
+# !!!
+# NOTE this computer doesn't use nmcli so these aliases are bunk
+# !!!
 alias wifi='nmcli device wifi'
 alias conn='nmcli con'
-alias cmdlist='compgen -A function -abck'
-alias backlight='light -S'
+alias cmdlist='compgen -F function -c'
+alias backlight='sudo light -S'
 
 # try hard
 alias tryharder='tryhard -g'
@@ -35,3 +39,6 @@ alias xchromium='xinit /usr/bin/chromium'
 # rc
 alias vimrc='vim ~/.vimrc'
 alias xinitrc='vim ~/.xinitrc'
+
+# brett <3
+alias desktop='xinit'

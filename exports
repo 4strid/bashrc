@@ -7,7 +7,7 @@ export CD='cd'
 export CAT='cat'
 export EDITOR='vim'
 # red stderr >:)
-export LD_PRELOAD="/usr/lib/libstderred.so${LD_PRELOAD:+:$LD_PRELOAD}"
+#export LD_PRELOAD="/usr/lib/libstderred.so${LD_PRELOAD:+:$LD_PRELOAD}"
 
 red=$'\e[1;31m'
 pink=$'\e[1;35m'

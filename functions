@@ -492,3 +492,14 @@ bat () {
 whatbranch ()  {
   git branch 2>/dev/null | grep -s --no-filename '*' || true
 }
+
+# ez mode
+
+install () {
+  sudo pacman -Sy
+  sudo pacman -S "$@" || aurutil -S "$@"
+}
+
+help () {
+  less $HOME/help.txt
+}
