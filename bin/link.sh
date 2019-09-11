@@ -53,6 +53,6 @@ import bashrc/bashrc
 
 EOF
   cp $HOME/.bashrc $HOME/.bashrc.orig
-  cat $HOME/.bashrc.bootstrap $HOME/.bashrc.orig > $HOME/.bashrc
+  cat $HOME/.bashrc.orig $HOME/.bashrc.bootstrap > $HOME/.bashrc
   rm $HOME/.bashrc.bootstrap $HOME/.bashrc.orig
 fi
