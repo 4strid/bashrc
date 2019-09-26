@@ -224,6 +224,27 @@ EOF
   tryhard "$BASEDIR" $FLAGS ls -d -1 "$@" | sed 's/[ \t]*$//' | sort -u
 }
 
+# try ()
+#
+# once more, with feeling
+#
+# convenience command for rerunning command
+#
+# Usage: try <again|harder|less>
+#
+try () {
+  LASTCMD=`history | tail -2 | head -1 | sed 's/^ *[0-9]*//'`
+  echo $LASTCMD
+  if [[ $1 == "again" ]]; then
+    tryhard -r -g $LASTCMD
+  elif [[ $1 == "harder" ]]; then
+    tryhard -g $LASTCMD
+  elif [[ $1 == "less" ]]; then
+    ($LASTCMD --color=always || $LASTCMD) | less -R
+  else
+    tryhard $LASTCMD
+  fi
+}
 
 # inception ()
 #
