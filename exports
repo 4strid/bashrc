@@ -1,18 +1,55 @@
 #
 # bashrc/exports
 # 
-export PATH=$HOME/bin:$PATH:$HOME/.npm/packages/bin
+
+setadd () {
+  local SET="$1"
+  shift
+  for ADD in "$@" ; do
+    if [[ ! $SET ]]; then
+      SET="$ADD"
+    elif [[ $SET != *$ADD* ]]; then
+      SET="$SET:$ADD"
+    fi
+  done
+  echo $SET
+}
+
+export PATH=`setadd $PATH $HOME/bin $HOME/.npm/packages/bin`
 export LS='ls --color=auto'
 export CD='cd'
 export CAT='cat'
 export EDITOR='vim'
 # red stderr >:)
-export LD_PRELOAD="/usr/lib/libstderred.so${LD_PRELOAD:+:$LD_PRELOAD}"
+[[ -f /usr/lib/libstderred.so ]] &&
+  export LD_PRELOAD=`setadd $LD_PRELOAD /usr/lib/libstderred.so`
 
 red=$'\e[1;31m'
 pink=$'\e[1;35m'
-purple=$'\e[0;35m'
+purple=$'\e[0;34m'
 green=$'\e[0;32m'
 reset=$'\e[0m'
 
+export C_RED=$red
+export C_PINK=$pink
+export C_STYLE=$purple
+export C_GREEN=$green
+export C_RESET=$reset
+
 export PS1=$'\[${red}\]`ok`\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \w]`inception`\[${reset}\]$ '
+
+
+# somewhat misguided first try
+setappend () {
+  local SETNAME="$1"
+  local SETREF="\$$SETNAME"
+  local SET=`eval echo $SETREF`
+
+  local VALUE="$2"
+
+  if [[ ! $SET ]]; then
+    eval $SETNAME=$VALUE
+  elif [[ $SET != *$VALUE* ]]; then
+    eval $SETNAME="$SET:$VALUE"
+  fi
+}

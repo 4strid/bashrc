@@ -34,7 +34,6 @@ alias restart='sudo systemctl reboot'
 alias suspend='sudo systemctl suspend'
 
 # try hard
-alias tryharder='tryhard -g'
 alias dive='tryhard -r vim_or_cd'
 
 # cute
@@ -44,5 +43,5 @@ alias clock='tty-clock -s -t -c'
 alias desktop='xinit -load ~/.Xresources /usr/bin/blackbox'
 alias xchromium='xinit /usr/bin/chromium'
 
-# rc
+# config
 alias vimrc='vim ~/.vimrc'
