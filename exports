@@ -27,16 +27,19 @@ export EDITOR='vim'
 red=$'\e[1;31m'
 pink=$'\e[1;35m'
 purple=$'\e[0;34m'
+light=$'\e[0;37m'
 green=$'\e[0;32m'
 reset=$'\e[0m'
 
 export C_RED=$red
 export C_PINK=$pink
+export C_LIGHT=$light
+export C_BLUE=$blue
 export C_STYLE=$purple
 export C_GREEN=$green
 export C_RESET=$reset
 
-export PS1=$'\[${red}\]`ok`\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \w]`inception`\[${reset}\]$ '
+export PS1=$'\[${red}\]`ok`\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \[${light}\]\w\[${pink}\]]`inception`\[${reset}\]$ '
 
 
 # somewhat misguided first try
