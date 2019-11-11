@@ -176,7 +176,7 @@ EOF
 
 tryfind () {
   local TYPE=
-  local BASEDIR=
+  local BASEDIR="-D ."
   local MULTI="-m"
   local RECURSE="-r"
   local GLOB=
