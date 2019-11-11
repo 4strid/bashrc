@@ -274,10 +274,10 @@ try () {
 # 2019-01-21
 
 inception () {
-  local SHLVL=$(($SHLVL - 1))
-  [[ $TERM == xterm ]] && SHLVL=$(($SHLVL - 2))
-  (( $SHLVL == 0 )) || echo "$SHLVL>"
-  return $SHLVL
+  local DEPTH=$(($SHLVL - 1))
+  [[ $TERM == xterm ]] && [[ ! $SSH_CONNECTION ]] && DEPTH=$(($DEPTH - 2))
+  (( $DEPTH == 0 )) || echo "$DEPTH>"
+  return $DEPTH
 }
 
 # ok? ()
