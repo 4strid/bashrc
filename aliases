@@ -19,6 +19,7 @@ alias grep='grep --exclude-dir=.git --exclude-dir=node_modules'
 alias cp='cp -i'
 alias mv='mv -i'
 alias lessc='less -R'
+alias tree="tree -C -I 'node_modules|.git'"
 # system
 alias wifi='nmcli device wifi'
 alias conn='nmcli con'
@@ -36,7 +37,6 @@ alias restart='sudo systemctl reboot'
 alias suspend='sudo systemctl suspend'
 
 # try hard
-alias tryharder='tryhard -g'
 alias dive='tryhard -r vim_or_cd'
 
 # cute
@@ -46,5 +46,10 @@ alias clock='tty-clock -s -t -c'
 alias desktop='xinit -load ~/.Xresources /usr/bin/blackbox'
 alias xchromium='xinit /usr/bin/chromium'
 
-# rc
+# config
 alias vimrc='vim ~/.vimrc'
+alias menu='vim ~/.blackbox/menu'
+
+#node
+alias nrun='npm run'
+alias strapi='./node_modules/strapi/bin/strapi.js'
