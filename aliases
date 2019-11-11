@@ -16,7 +16,10 @@ alias lsd='$LS --group-directories-first'
 alias info='info --vi-keys'
 alias lynx='lynx --session ~/.lynxsession'
 alias grep='grep --exclude-dir=.git --exclude-dir=node_modules'
+alias cp='cp -i'
+alias mv='mv -i'
 alias lessc='less -R'
+alias tree="tree -C -I 'node_modules|.git'"
 # system
 alias wifi='nmcli device wifi'
 alias conn='nmcli con'
@@ -45,3 +48,8 @@ alias xchromium='xinit /usr/bin/chromium'
 
 # config
 alias vimrc='vim ~/.vimrc'
+alias menu='vim ~/.blackbox/menu'
+
+#node
+alias nrun='npm run'
+alias strapi='./node_modules/strapi/bin/strapi.js'
