@@ -1,17 +1,40 @@
 #
 # bashrc/aliases
 #
+# conventions, common mistakes, and cool new powers
+#
+# dependencies
+#   cd_or_vim
+#   vim_or_cd
+#   cat_or_ls
+#   ls_or_cat
+#   /bin/lynx
+#   /bin/grep
+#   /bin/tree
+#   /bin/nmcli
+#   /bin/light
+#   /bin/tty-clock
+#   /bin/vim
+#   /bin/npm
+#   /bin/xinit
+#   /bin/blackbox
+#   /bin/minecraft-launcher
+#   [must be a systemctl flavor of linux]
+#
+#######
 
 # i mix these up all the time ok?...
 alias cd='cd_or_vim'
 alias vim='vim_or_cd'
 alias cat='cat_or_ls'
-alias ls='cat_or_ls'
+alias ls='ls_or_cat'
+
 # ls variants
 alias la='$LS -a'
 alias lsc='$LS --color=always'
 alias lsl='$LS -l -h'
 alias lsd='$LS --group-directories-first'
+
 # defaults
 alias info='info --vi-keys'
 alias lynx='lynx --session ~/.lynxsession'
@@ -20,19 +43,23 @@ alias cp='cp -i'
 alias mv='mv -i'
 alias lessc='less -R'
 alias tree="tree -C -I 'node_modules|.git'"
+
 # system
 alias wifi='nmcli device wifi'
 alias conn='nmcli con'
+# TODO: write a friendlier wrapper around nmcli
 alias cmdlist='compgen -A function -abck'
 alias funlist='compgen -A function -a'
 alias backlight='light -S'
+
 # sudo
 alias pacman='sudo pacman'
 alias systemctl='sudo systemctl'
 alias visudo='sudo visudo'
 alias mount='sudo mount'
+
 # power
-alias shutdown='sudo systemctl poweroff'
+alias shutdown='sudo systemctl poweroff' #*technically* dangerous; overrides shutdown
 alias restart='sudo systemctl reboot'
 alias suspend='sudo systemctl suspend'
 
@@ -40,11 +67,12 @@ alias suspend='sudo systemctl suspend'
 alias dive='tryhard -r vim_or_cd'
 
 # cute
-alias clock='tty-clock -s -t -c'
+alias clock='tty-clock -s -t -c -C 7'
 
 # x gon give it to ya
 alias desktop='xinit -load ~/.Xresources /usr/bin/blackbox'
 alias xchromium='xinit /usr/bin/chromium'
+alias minecraft='xinit /usr/bin/minecraft-launcher'
 
 # config
 alias vimrc='vim ~/.vimrc'
@@ -52,4 +80,3 @@ alias menu='vim ~/.blackbox/menu'
 
 #node
 alias nrun='npm run'
-alias strapi='./node_modules/strapi/bin/strapi.js'

@@ -1,4 +1,14 @@
+#
+# bashrc/shortcuts
+# 
 # little guys
+#
+# dependencies
+#   tryhard
+#   ~/bin/google
+#
+#######
+
 alias g='google'
 alias t='tryhard -g'
 alias T='tryhard -r -g'

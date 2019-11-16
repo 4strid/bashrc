@@ -1,9 +1,15 @@
 #
 # bashrc/reflect
 #
+# "I write shell scripts to rewrite my shell scripts"
 # self editing bashrc
-# "I write shell scripts to write my shell scripts"
+#
+# dependencies
+#   tryhard
+#   tryfind
+#   /bin/vim
 # 
+######
 
 alias sob="source $HOME/.bashrc"
 

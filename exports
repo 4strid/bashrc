@@ -1,6 +1,10 @@
 #
 # bashrc/exports
 # 
+# dependencies
+#   setadd
+#
+######
 
 export PATH=`setadd $PATH $HOME/bin $HOME/.npm/packages/bin`
 export LS='ls --color=auto'
@@ -23,20 +27,12 @@ export C_STYLE=$purple
 export C_GREEN=$green
 export C_RESET=$reset
 
+
+# dependencies
+#   ok
+#   whatbranch
+#   batcolor
+#   inception
+#   [danger/time alias]
+#   /bin/vim
 export PS1=$'\[${red}\]`ok`\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \w]`inception`\[${reset}\]$ '
-
-
-# somewhat misguided first try
-setappend () {
-  local SETNAME="$1"
-  local SETREF="\$$SETNAME"
-  local SET=`eval echo $SETREF`
-
-  local VALUE="$2"
-
-  if [[ ! $SET ]]; then
-    eval $SETNAME=$VALUE
-  elif [[ $SET != *$VALUE* ]]; then
-    eval $SETNAME="$SET:$VALUE"
-  fi
-}

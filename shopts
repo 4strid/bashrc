@@ -3,18 +3,19 @@
 #
 # set *all the shopts*
 #
+######
 
 # shopt -s autocd
 # shopt -s cdable_vars
-# fcuk yeah
+#  fcuk yeah
   shopt -s cdspell
 # shopt -s checkhash
-# won't someone think of the children?
+#  won't someone think of the children?
   shopt -s checkjobs
-# need this for opening 30000 vim windows
+#  need this for opening 30000 vim windows
   shopt -s checkwinsize
-# those who forget history are\
-# doomed to hit a lot of arrow keys
+#  those who forget history are\
+#  doomed to hit a lot of arrow keys
   shopt -s cmdhist
 # shopt -s compat31
 # shopt -s compat32
@@ -24,40 +25,40 @@
 # shopt -s compat43
 # shopt -s complete_fullquote
 # shopt -s direxpand
-# fcuk/yeah/
+#  fcuk/yeah/
   shopt -s dirspell
 # shopt -s dotglob
 # shopt -s execfail
 # shopt -s expand_aliases
 # shopt -s extdebug
-# yass+(s)
+#  yass+(s)
   shopt -s extglob
 # shopt -s extquote
 # shopt -s failglob
 # shopt -s force_fignore
 # shopt -s globasciiranges
-# you're a **
+#  you're a **
   shopt -s globstar
 # shopt -s gnu_errfmt
 # shopt -s histappend
-# you f*cked up, but that's ok
+#  you f*cked up, but that's ok
   shopt -s histreedit
 # shopt -s histverify
-# filen@mes
+#  filen@mes
   shopt -u hostcomplete
 # shopt -s huponexit
 # shopt -s inherit_errexit
 # shopt -s interactive_comments
 # shopt -s lastpipe
-# lit.
+#  lit.
   shopt -s lithist
 # shopt -s login_shell
 # shopt -s mailwarn
-# no bash, I don't want to see all 2179 possibilities
+#  no bash, I don't want to see all 2179 possibilities
   shopt -s no_empty_cmd_completion
 # shopt -s nocaseglob
 # shopt -s nocasematch
-# need this for tryharder. hopefully it doesn't hurt anyone
+#  need this for tryharder. hopefully it doesn't hurt anyone
   shopt -s nullglob
 # shopt -s progcomp
 # shopt -s promptvars
