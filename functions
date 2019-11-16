@@ -2,14 +2,20 @@
 # bashrc/functions
 #
 
+# scold ()
+#
 # cry foul
 # (print to stderr)
+#
 # 2019-09-19
 scold () {
   echo "$*" 1>&2
 }
 
+# attempt ()
+#
 # don't cry over spilled milk
+#
 # 2019-09-19
 attempt () {
   $@ 2>/dev/null
@@ -189,7 +195,7 @@ EOF
 
 tryfind () {
   local TYPE=
-  local BASEDIR=
+  local BASEDIR="-D ."
   local MULTI="-m"
   local RECURSE="-r"
   local GLOB=
@@ -241,7 +247,7 @@ lastcmd () {
   history | tail -2 | head -1 | sed 's/^ *[0-9]*//'
 }
 
-# try ()
+# doless ()
 #
 # once more, with feeling
 #
@@ -249,18 +255,9 @@ lastcmd () {
 #
 # Usage: try <again|harder|less>
 #
-try () {
+doless () {
   LASTCMD=`lastcmd`
-  echo $LASTCMD
-  if [[ $1 == "again" ]]; then
-    tryhard -r -g $LASTCMD
-  elif [[ $1 == "harder" ]]; then
-    tryhard -g $LASTCMD
-  elif [[ $1 == "less" ]]; then
-    (attempt $LASTCMD --color=always || $LASTCMD) | less -R
-  else
-    tryhard $LASTCMD
-  fi
+  (attempt $LASTCMD --color=always || $LASTCMD) | less -R
 }
 
 # inception ()
@@ -474,7 +471,9 @@ cat_or_ls () {
 
 # oh bash, you know what I meant
 vim_or_cd () {
-  if [[ ! $1 ]]; then
+  if [[ $1 == -* ]]; then
+    $EDITOR $@
+  elif [[ ! $1 ]]; then
     $EDITOR
   elif [[ -d $1 ]]; then
     cd+ $1
@@ -494,8 +493,7 @@ cd_or_vim () {
   fi
 }
 
-#(Disc|C)harging, 
-
+# determine if charging or not
 _bat_match () {
   [[ `attempt acpi -i` =~ (Discharging|Charging|Unknown|Not charging),\ ([0-9]{1,3})%.*(remaining|until\ charged|.) ]]
 }
@@ -542,5 +540,25 @@ bat () {
 # 2019-08-19
 
 whatbranch ()  {
-  git branch 2>/dev/null | grep -s --no-filename '*' || true
+  git branch 2>/dev/null | grep -s --no-filename '*' || :
+}
+
+
+# setadd ()
+#
+# don't ever add me or my son to the $PATH again
+#
+# 4strid (Astrid Fesz-Nguyen IV)
+# 2019-09-15
+setadd () {
+  local SET="$1"
+  shift
+  for ADD in "$@" ; do
+    if [[ ! $SET ]]; then
+      SET="$ADD"
+    elif [[ $SET != *$ADD* ]]; then
+      SET="$SET:$ADD"
+    fi
+  done
+  echo $SET
 }

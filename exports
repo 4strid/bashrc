@@ -2,19 +2,6 @@
 # bashrc/exports
 # 
 
-setadd () {
-  local SET="$1"
-  shift
-  for ADD in "$@" ; do
-    if [[ ! $SET ]]; then
-      SET="$ADD"
-    elif [[ $SET != *$ADD* ]]; then
-      SET="$SET:$ADD"
-    fi
-  done
-  echo $SET
-}
-
 export PATH=`setadd $PATH $HOME/bin $HOME/.npm/packages/bin`
 export LS='ls --color=auto'
 export CD='cd'
