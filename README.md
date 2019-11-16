@@ -1,24 +1,32 @@
-# cutejs/bashrc
+# 4strid/bashrc
 
-## king of dotfiles
+## queen of dotfiles
 
 ### Installation
 
 There are 2 installers available in the `bin` directory: `link.sh` and `install.sh`
 
-Link creates a symlink from wherever you cloned this repo to `~lib/bashrc`. This is the method
+Link creates a symlink from wherever you cloned this repo to `~/lib/bashrc`. This is the method
 I use so I can keep my computers in sync with git. Since they're links, you can't move the files
 without relinking.
 
-Install copies these files into lib/bashrc. You can safely delete this repo after that. Just clone
-it again and run install again to get fresh baked bashrc at your leisure.
+Install copies these files into `~/lib/bashrc`. You can safely delete this repo, but you'll
+have to clone and run install again to get fresh baked bashrc.
 
 ### Honestly?
 
 You might be better served just copying the bits you like into your own .bashrc
+Especially interesting are the `cd+` and `tryhard` functions! You may find them quite useful,
+if nothing else.
 
-Mostly I want this in the cloud to keep my environment the same between computers.
+I've annotated everything with dependencies so copy/install those too or stuff will break.
 
-With love,
+(Mostly I want this in "the cloud" to keep my environment the same between computers.)
 
-Astrid.
+*With love,*
+
+- Astrid
+
+
+#### See also
+[4strid/pc](https://github.com/4strid/pc) for even more ridiculousness
