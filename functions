@@ -582,7 +582,7 @@ batcolor () {
   local CHARGE=${BASH_REMATCH[1]}
   local NUM=${BASH_REMATCH[2]}
   # hardcoded to pink for now
-  local COLOR=$'\033[1;35m'
+  local COLOR=$'\033[1;35m' # "bold purple"
   [[ $BASH_REMATCH ]] && {
     if [[ $CHARGE == Discharging ]]; then
       if (( $NUM <= 10 )); then
@@ -593,10 +593,10 @@ batcolor () {
         COLOR=$'\033[1;32m' # Still Good = green
       fi
     elif [[ $CHARGE == 'Unknown' ]]; then
-      COLOR=$'\033[0;34m' # Unknown = purple
+      COLOR=$'\033[1;34m' # Unknown = purple
     else
       if (( $NUM <= 85 )); then
-        COLOR=$'\033[1;34m' # Charging = blue
+        COLOR=$'\033[0;34m' # Charging = blue
       fi
     fi
   }
@@ -675,4 +675,23 @@ setappend () {
   elif [[ $SET != *$VALUE* ]]; then
     eval $SETNAME="$SET:$VALUE"
   fi
+}
+
+#
+# screenshot
+#
+# take a picture, it'll last longer
+#
+# dependencies
+#   /bin/xwd
+#   /bin/convert
+#
+# 4strid (Astrid Fesz-Nguyen IV)
+# 2019-11-17
+#
+# (duplicated in ~/bin/screenshot)
+
+screenshot () {
+  [[ ! -d $HOME/doc/screenshots ]] && mkdir -p $HOME/doc/screenshots
+  xwd -root -display :0 | convert xwd:- png:- > $HOME/doc/screenshots/`date +%F-%I.%M.%S-%P.png`
 }

@@ -51,6 +51,7 @@ alias conn='nmcli con'
 alias cmdlist='compgen -A function -abck'
 alias funlist='compgen -A function -a'
 alias backlight='light -S'
+alias stop='kill' #lol i just get this wrong every time
 
 # sudo
 alias pacman='sudo pacman'
