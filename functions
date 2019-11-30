@@ -299,14 +299,16 @@ doless () {
 # 4strid (Astrid Fesz-Nguyen)
 # 2019-01-21
 
-# TODO: this is reallllll hacky. there has to be a better way to detect edge cases
-
 inception () {
   local DEPTH=$(($SHLVL - 1))
-  [[ $TERM == xterm ]] &&
-    [[ ! $SSH_CONNECTION ]] &&
-    [[ ! $VIM_TERMINAL ]] &&
-    DEPTH=$(($DEPTH - 2))
+  #[[ $TERM == xterm ]] &&
+    #[[ ! $SSH_CONNECTION ]] &&
+    #[[ ! $VIM_TERMINAL ]] &&
+    #DEPTH=$(($DEPTH - 2))
+
+  # this APPEARs to only be set in xterm
+  # and conveniently, not in an SSH session!
+  [[ $XTERM_VERSION ]] && DEPTH=$(($DEPTH - 2))
   
   (( $DEPTH == 0 )) || echo "$DEPTH>"
   return $DEPTH
