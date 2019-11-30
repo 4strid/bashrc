@@ -8,6 +8,7 @@
 #   vim_or_cd
 #   cat_or_ls
 #   ls_or_cat
+#   tryhard
 #   /bin/lynx
 #   /bin/grep
 #   /bin/tree
@@ -28,6 +29,10 @@ alias cd='cd_or_vim'
 alias vim='vim_or_cd'
 alias cat='cat_or_ls'
 alias ls='ls_or_cat'
+
+# dot dots
+alias ..='cd+ ..'
+alias ...='cd+ .. ..'
 
 # ls variants
 alias la='$LS -a'
@@ -52,6 +57,7 @@ alias cmdlist='compgen -A function -abck'
 alias funlist='compgen -A function -a'
 alias backlight='light -S'
 alias stop='kill' #lol i just get this wrong every time
+alias etc='tryhard -e vim'
 
 # sudo
 alias pacman='sudo pacman'
@@ -71,13 +77,10 @@ alias dive='tryhard -r vim_or_cd'
 alias clock='tty-clock -s -t -c -C 7'
 
 # x gon give it to ya
-alias desktop='xinit -load ~/.Xresources /usr/bin/blackbox'
+alias desktop='cd ~ && xinit'
 alias xchromium='xinit /usr/bin/chromium'
 alias minecraft='xinit /usr/bin/minecraft-launcher'
 
 # config
 alias vimrc='vim ~/.vimrc'
 alias menu='vim ~/.blackbox/menu'
-
-#node
-alias nrun='npm run'
