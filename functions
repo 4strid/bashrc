@@ -41,6 +41,8 @@ attempt () {
 # 4strid (Astrid Fesz-Nguyen IV)
 # 2019-02-14
 
+# TODO: add .tryhardignore config file (mostly for .git and node_modules lol)
+
 tryhard () {
 
   local FILES=1
@@ -57,7 +59,7 @@ tryhard () {
   [[ -e $HOME/.tryhardrc ]] && source $HOME/.tryhardrc
 
   OPTIND=1
-  while getopts "fdaD:ceuUrgmvVh" OPT; do
+  while getopts "fdaD:ceuUrgGmvVh" OPT; do
     case $OPT in
     f) FILES=1; DIRS=0 # files
       ;;
@@ -87,6 +89,9 @@ tryhard () {
     g)
       GLOB=1
       ;;
+    G)
+      GLOB=2
+      ;;
     m)
       MULTI=1
       ;;
@@ -108,10 +113,11 @@ tryhard () {
     -e       Search in configuration places (by default /etc)
     -u       Search up one parent directory
     -U       Search up to 3 levels of parent directories
+    -g       Adds a glob star to the end of TARGET
+    -G       Adds a glob star to both ends of TARGET
+    -D DIR   Use DIR as base search directory
     -r       Recursively search. If search directory is not explicitly
               provided, starts in current working directory
-    -g       Adds a glob star to the end of TARGET
-    -D DIR   Use DIR as base search directory
     -m       Perform CMD on all found TARGETs rather than stopping at the first one
     -v       Prints full path of resolved target(s) as it goes along
     -V       Prints full path of resolved target(s) and additional debug information
@@ -145,7 +151,8 @@ EOF
       TT="${TARGET} ${T}/${TARGET}"
       # "//" just kind of bugs me lol
       [[ $T == "/" ]] && TT="/$TARGET"
-      (( $GLOB )) && TT="${TT}*"
+      (( $GLOB == 1 )) && TT="${TT}*"
+      (( $GLOB == 2 )) && TT="${T}/*${TARGET}*"
       (( $VERBOSE >= 2 )) && {
         echo "DEBUG T $T" 1>&2 
         echo "DEBUG TT $TT" 1>&2
@@ -191,7 +198,7 @@ EOF
 
 # tryfind ()
 #
-# like find or locate but using tryhard mechanics
+# "FIND THEM, YOU IDIOTS!" - a supervillain, probably
 # 
 # Usage: tryfind [OPTIONS] TARGET [...TARGETS]
 #
@@ -220,6 +227,7 @@ tryfind () {
       D) BASEDIR="-D $OPTARG";;
       1) MULTI="" ;;
       g) GLOB="-g" ;;
+      G) GLOB="-G" ;;
       R) RECURSE="" ;;
       v) VERBOSE="-v" ;;
       V) VERBOSE="-V" ;;
@@ -265,7 +273,7 @@ lastcmd () {
 #
 # convenience command for rerunning command
 #
-# Usage: try <again|harder|less>
+# Usage: doless
 #
 # dependencies
 #   lastcmd
@@ -274,7 +282,9 @@ lastcmd () {
 # 4strid (Astrid Fesz-Nguyen IV)
 
 doless () {
-  LASTCMD=`lastcmd`
+  local LASTCMD=`lastcmd`
+  local COLOR=
+  [[ $LASTCMD == "ls*" ]] && COLOR=
   (attempt $LASTCMD --color=always || $LASTCMD) | less -R
 }
 
@@ -291,6 +301,7 @@ doless () {
 inception () {
   local DEPTH=$(($SHLVL - 1))
   [[ $TERM == xterm ]] && [[ ! $SSH_CONNECTION ]] && DEPTH=$(($DEPTH - 2))
+  (( $DEPTH < 0 )) 
   (( $DEPTH == 0 )) || echo "$DEPTH>"
   return $DEPTH
 }
@@ -364,9 +375,14 @@ cd+ () {
   local -a PRE
   local -a POST
   local FAILED=0
-  local OLDERPWD="$OLDPWD"
-  local OLD_PWD="$PWD"
-  if (( $# )); then
+  local START="$PWD"
+  local PREV="$OLDPWD"
+  local PREV2="$OLDPWD2"
+
+  # woo extra step of history
+  if [[ $1 == "--" ]]; then
+    DEST=("$PREV2")
+  elif (( $# )); then
     DEST=("$@")
   else
     DEST=("$HOME")
@@ -385,9 +401,9 @@ cd+ () {
 
   # go back if something went wrong
   if (( $FAILED )); then
-    OLDPWD="$OLDERPWD"
-    cd "$OLD_PWD"
+    cd "$START"
     echo "You can't get there from here" 1>&2
+    export OLDPWD="$PREV"
     return 127
   # run post commands
   else
@@ -406,6 +422,9 @@ cd+ () {
     done
     # final remaining command
     [[ $CMD ]] && ${CMD[@]}
+
+    export OLDPWD2="$PREV"
+    export OLDPWD="$START"
   fi
 }
 
@@ -692,6 +711,28 @@ setappend () {
 # (duplicated in ~/bin/screenshot)
 
 screenshot () {
-  [[ ! -d $HOME/doc/screenshots ]] && mkdir -p $HOME/doc/screenshots
-  xwd -root -display :0 | convert xwd:- png:- > $HOME/doc/screenshots/`date +%F-%I.%M.%S-%P.png`
+  local ONE=0
+  local DIR="$HOME/doc/screenshots"
+  local FILE="${DIR}/`date +%F-%I.%M.%S-%P`.png"
+  OPTIND=1
+  while getopts "1D:" OPT; do
+    case $OPT in
+    1)
+      ONE=1
+      ;;
+    D)
+      DIR=$OPTARG
+      ;;
+    *)
+      return 1
+      ;;
+    esac
+  done
+
+  [[ ! -d $DIR ]] && mkdir -p "$DIR"
+  if (( $ONE )); then
+    xwd | convert xwd:- png:- > $FILE
+  else
+    xwd -root -display :0 | convert xwd:- png:- > $FILE
+  fi
 }
