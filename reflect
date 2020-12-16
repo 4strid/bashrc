@@ -1,9 +1,15 @@
 #
 # bashrc/reflect
 #
+# "I write shell scripts to rewrite my shell scripts"
 # self editing bashrc
-# "I write shell scripts to write my shell scripts"
+#
+# dependencies
+#   tryhard
+#   tryfind
+#   /bin/vim
 # 
+######
 
 alias sob="source $HOME/.bashrc"
 
@@ -19,8 +25,13 @@ _reflect_edit () {
     else JUMP="+/${JUMP}"
     fi
   fi
+  # absolute madness:
+  # 1. use tryhard mode to allow for typing partial names of sections e.g. "bashrc fun"
+  # 2. do a ridiculous dance to set the filetype
+  # 3. (potentially partial) filename
   tryhard -D "$HOME/lib $HOME/src" -g\
-	vim -S `tryfind -1 -R -D "$HOME $HOME/lib/bashrc $HOME/src/bashrc" lib/set_ft_sh.vim`\ $JUMP bashrc/$SECTION
+    vim -S `tryfind -1 -R -D "$HOME $HOME/lib/bashrc $HOME/src/bashrc" lib/set_ft_sh.vim`\ $JUMP\
+    bashrc/$SECTION
 }
 
 _reflect_source () {

@@ -1,7 +1,7 @@
 [[ ! -f $HOME/.cutestrap ]] && cat > $HOME/.cutestrap <<EOF
 #!/bin/bash
 # cutestrap
-# this suffices to load cute-ils or cutejs bashrc
+# this suffices to load cute-ils or 4strid's bashrc
 
 function import {
   local OPT=
@@ -12,11 +12,12 @@ function import {
   for T in "." "./lib" "\$HOME/lib" "/usr/lib" "/lib" "./src"; do
     local SRC="\$T/\$1"
     if [[ -f "\$SRC" ]]; then
+      local ORIGPWD=\$PWD
       local OLDERPWD=\$OLDPWD
       cd \`dirname "\$SRC"\`
       source \`basename "\$SRC"\`
       local STATUS=\$?
-      cd "\$OLDPWD"
+      cd "\$ORIGPWD"
       export OLDPWD="\$OLDERPWD"
       return \$STATUS
     fi

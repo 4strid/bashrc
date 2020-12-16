@@ -1,12 +1,16 @@
 #
 # bashrc/bashrc
 #
-# let's get organized
+# imagine if this was all in one file x_x
 #
+# dependencies
+#   cutestrap/import
+#   [lol, i mean... the whole thing, right?]
 #
 # cutejs (River Fesz-Nguyen)
 # 2019-01-21
 #
+######
 
 # disable cd mods while loading bashrc
 # (fails on first run so ignore stderr)
@@ -24,6 +28,6 @@ import -v reflect
 import -v shopts
 import -v danger
 
-is_tty && setfont Tamsyn8x16r
+attempt is_tty && setfont Tamsyn8x16r
 
 cdmod -p tryhard -g -v -P ls --color=auto

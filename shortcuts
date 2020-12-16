@@ -1,7 +1,22 @@
+#
+# bashrc/shortcuts
+# 
 # little guys
+#
+# dependencies
+#   tryhard
+#   ~/bin/google
+#
+#######
+
 alias g='google'
 alias t='tryhard -g'
-alias T='tryhard -r -g'
+alias T='tryhard -G -r'
+alias t!='tryhard -g `lastcmd`'
+alias T!='tryhard -G -r `lastcmd`'
 alias v='tryhard -g vim'
-alias V='tryhard -r -g vim'
-alias pm='sudo pacman'
+alias V='tryhard -G -r vim'
+alias n='npm run'
+alias :q='exit'
+alias :e='v'
+alias :cd='cd'

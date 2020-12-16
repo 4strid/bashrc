@@ -1,18 +1,42 @@
 #
 # bashrc/exports
 # 
-export PATH=$HOME/bin:$PATH:$HOME/.npm/packages/bin
+# dependencies
+#   setadd
+#
+######
+
+export PATH=`setadd $PATH $HOME/bin $HOME/.npm/packages/bin`
 export LS='ls --color=auto'
 export CD='cd'
 export CAT='cat'
 export EDITOR='vim'
+export CP='cp'
+export RM='rm'
 # red stderr >:)
-export LD_PRELOAD="/usr/lib/libstderred.so${LD_PRELOAD:+:$LD_PRELOAD}"
+[[ -f /usr/lib/libstderred.so ]] &&
+  export LD_PRELOAD=`setadd $LD_PRELOAD /usr/lib/libstderred.so`
 
 red=$'\e[1;31m'
 pink=$'\e[1;35m'
-purple=$'\e[0;35m'
+purple=$'\e[0;34m'
+light=$'\e[0;37m'
 green=$'\e[0;32m'
 reset=$'\e[0m'
 
-export PS1=$'\[${red}\]`ok`\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \w]`inception`\[${reset}\]$ '
+export C_RED=$red
+export C_PINK=$pink
+export C_LIGHT=$light
+export C_BLUE=$blue
+export C_STYLE=$purple
+export C_GREEN=$green
+export C_RESET=$reset
+
+# dependencies
+#   ok
+#   whatbranch
+#   batcolor
+#   inception
+#   [danger/time alias]
+#   /bin/vim
+export PS1=$'\[${red}\]`ok`\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \[${light}\]\w\[${pink}\]]`inception`\[${reset}\]$ '

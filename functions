@@ -1,19 +1,47 @@
 #
 # bashrc/functions
 #
+# all manner of goodies and nonsense
+#
+######
+
+# scold ()
+#
+# cry foul
+# (print to stderr)
+#
+# 2019-09-19
+# 4strid (Astrid Fesz-Nguyen IV)
+
+scold () {
+  echo "$*" 1>&2
+}
+
+# attempt ()
+#
+# don't cry over spilled milk
+#
+# 2019-09-19
+# 4strid (Astrid Fesz-Nguyen IV)
+
+attempt () {
+  $@ 2>/dev/null
+}
 
 # tryhard ()
 #
 # tryhard mode: activated
 #
 # tries common places for when I forget to type the start
-# of a path. 'tryhard cd etc` becomes 'cd /etc` and
-# 'tryhard vim .bashrc` works from anywhere
+# of a path. `tryhard cd etc' becomes `cd /etc' and
+# `tryhard vim .bashrc' works from anywhere
 #
-# Usage: tryhard CMD TARGET
+# Usage: tryhard [options] CMD TARGET
 #
-# cutejs (Astrid Fesz-Nguyen)
+# 4strid (Astrid Fesz-Nguyen IV)
 # 2019-02-14
+
+# TODO: add .tryhardignore config file (mostly for .git and node_modules lol)
 
 tryhard () {
 
@@ -31,7 +59,7 @@ tryhard () {
   [[ -e $HOME/.tryhardrc ]] && source $HOME/.tryhardrc
 
   OPTIND=1
-  while getopts "fdaD:ceuUrgmvVh" OPT; do
+  while getopts "fdaD:ceuUrgGmvVh" OPT; do
     case $OPT in
     f) FILES=1; DIRS=0 # files
       ;;
@@ -61,6 +89,9 @@ tryhard () {
     g)
       GLOB=1
       ;;
+    G)
+      GLOB=2
+      ;;
     m)
       MULTI=1
       ;;
@@ -72,7 +103,7 @@ tryhard () {
       ;;
     h)
       cat <<EOF
-usage: tryhard CMD TARGET
+  Usage: tryhard CMD TARGET
 
   Options:
     -f       TARGET should be a file
@@ -82,13 +113,14 @@ usage: tryhard CMD TARGET
     -e       Search in configuration places (by default /etc)
     -u       Search up one parent directory
     -U       Search up to 3 levels of parent directories
+    -g       Adds a glob star to the end of TARGET
+    -G       Adds a glob star to both ends of TARGET
+    -D DIR   Use DIR as base search directory
     -r       Recursively search. If search directory is not explicitly
               provided, starts in current working directory
-    -g       Adds a glob star to the end of TARGET
-    -D DIR   Use DIR as base search directory
     -m       Perform CMD on all found TARGETs rather than stopping at the first one
-    -v       Prints full path of resolved target
-    -V       Prints full path of resolved target and debug information
+    -v       Prints full path of resolved target(s) as it goes along
+    -V       Prints full path of resolved target(s) and additional debug information
     -h       Print this help message
 
   Files:
@@ -119,7 +151,8 @@ EOF
       TT="${TARGET} ${T}/${TARGET}"
       # "//" just kind of bugs me lol
       [[ $T == "/" ]] && TT="/$TARGET"
-      (( $GLOB )) && TT="${TT}*"
+      (( $GLOB == 1 )) && TT="${TT}*"
+      (( $GLOB == 2 )) && TT="${T}/*${TARGET}*"
       (( $VERBOSE >= 2 )) && {
         echo "DEBUG T $T" 1>&2 
         echo "DEBUG TT $TT" 1>&2
@@ -143,6 +176,7 @@ EOF
           fi
         fi
       done
+      # TODO: breath first instead of depth first search
       if (( $RECURSE )); then
         local -a SUBS
         if [[ -d $T ]]; then
@@ -165,18 +199,21 @@ EOF
 
 # tryfind ()
 #
-# like find or locate but using tryhard mechanics
+# "FIND THEM, YOU IDIOTS!" - a supervillain, probably
 # 
 # Usage: tryfind [OPTIONS] TARGET [...TARGETS]
 #
 # (shoutouts to GNU sort <3)
 #
-# cutejs (Astrid Fesz-Nguyen)
+#  dependencies
+#    tryhard
+#
+# 4strid (Astrid Fesz-Nguyen IV)
 # 2019-08-20
 
 tryfind () {
   local TYPE=
-  local BASEDIR=
+  local BASEDIR="-D ."
   local MULTI="-m"
   local RECURSE="-r"
   local GLOB=
@@ -191,25 +228,26 @@ tryfind () {
       D) BASEDIR="-D $OPTARG";;
       1) MULTI="" ;;
       g) GLOB="-g" ;;
+      G) GLOB="-G" ;;
       R) RECURSE="" ;;
       v) VERBOSE="-v" ;;
       V) VERBOSE="-V" ;;
       h) cat <<EOF
-Usage: tryfind [options] TARGET [...TARGETS]
-
-Options:
-  -f   Search only for files
-  -d   Search only for directories 
-  -D   Base directory to search in
-  -1   Only return first match
-  -R   Do not recursively search subdirectories 
-  -g   Add globstar to the end of filename
-  -u   Also search directory above
-  -U   Also search up to 3 directories above
-  -v   Print all search paths 
-  -h   Print this help message
-
-See also: tryhard on which this is based
+  Usage: tryfind [options] TARGET [...TARGETS]
+  
+  Options:
+    -f   Search only for files
+    -d   Search only for directories 
+    -D   Base directory to search in
+    -1   Only return first match
+    -R   Do not recursively search subdirectories 
+    -g   Add globstar to the end of filename
+    -u   Also search directory above
+    -U   Also search up to 3 directories above
+    -v   Print all search paths 
+    -h   Print this help message
+  
+  See also: tryhard () on which this is based
 EOF
       return 0
       ;;
@@ -221,29 +259,34 @@ EOF
 
   local FLAGS="$TYPE $MULTI $RECURSE $GLOB $VERBOSE"
 
+  # lmao we use `sort' just to remove duplicates because I couldn't figure another way out
+  # it's *pretty damn silly* that it had the exact functionality i needed though
   tryhard "$BASEDIR" $FLAGS ls -d -1 "$@" | sed 's/[ \t]*$//' | sort -u
 }
 
-# try ()
+lastcmd () {
+  history | tail -2 | head -1 | sed 's/^ *[0-9]*//'
+}
+
+# doless ()
 #
 # once more, with feeling
 #
 # convenience command for rerunning command
 #
-# Usage: try <again|harder|less>
+# Usage: doless
 #
-try () {
-  LASTCMD=`history | tail -2 | head -1 | sed 's/^ *[0-9]*//'`
-  echo $LASTCMD
-  if [[ $1 == "again" ]]; then
-    tryhard -r -g $LASTCMD
-  elif [[ $1 == "harder" ]]; then
-    tryhard -g $LASTCMD
-  elif [[ $1 == "less" ]]; then
-    ($LASTCMD --color=always || $LASTCMD) | less -R
-  else
-    tryhard $LASTCMD
-  fi
+# dependencies
+#   lastcmd
+#
+# 2019-11-16
+# 4strid (Astrid Fesz-Nguyen IV)
+
+doless () {
+  local LASTCMD=`lastcmd`
+  local COLOR=
+  [[ $LASTCMD == "ls*" ]] && COLOR=
+  (attempt $LASTCMD --color=always || $LASTCMD) | less -R
 }
 
 # inception ()
@@ -253,13 +296,22 @@ try () {
 # Returns 0 if not in a subshell, otherwise prints depth
 # and returns that number as an error code
 #
-# cutejs (Astrid Fesz-Nguyen)
+# 4strid (Astrid Fesz-Nguyen)
 # 2019-01-21
 
 inception () {
-  local SHLVL=$(($SHLVL - 1))
-  (( $SHLVL == 0 )) || echo "$SHLVL>"
-  return $SHLVL
+  local DEPTH=$(($SHLVL - 1))
+  #[[ $TERM == xterm ]] &&
+    #[[ ! $SSH_CONNECTION ]] &&
+    #[[ ! $VIM_TERMINAL ]] &&
+    #DEPTH=$(($DEPTH - 2))
+
+  # this APPEARs to only be set in xterm
+  # and conveniently, not in an SSH session!
+  [[ $XTERM_VERSION ]] && DEPTH=$(($DEPTH - 2))
+  
+  (( $DEPTH == 0 )) || echo "$DEPTH>"
+  return $DEPTH
 }
 
 # ok? ()
@@ -272,9 +324,9 @@ inception () {
 # Forwards exit code of last executed command
 # prints the code and an error message if not 0
 #
-# Usage: $ <TEST_CMD> ; ok? [MESSAGE...]
+# Usage: $ <TEST_CMD> ; ok [MESSAGE...]
 #
-# cutejs (Astrid Fesz-Nguyen)
+# 4strid (Astrid Fesz-Nguyen)
 # 2019-01-21
 
 ok () {
@@ -292,8 +344,13 @@ ok () {
   return $OK
 }
 
+# is_tty ()
+#
 # Hacky way to check if current shell is a tty.
 # Really we should also check inception but w/e
+#
+# 2019-02-13
+
 is_tty () {
   local TTY_REGEX='^/dev/tty[0-9]+'
   if [[ `tty` =~ $TTY_REGEX ]]; then
@@ -307,37 +364,76 @@ is_tty () {
 #
 # one of those rare, mysterious 800MB CDs you can never find anymore
 #
-# Usage: drop in replacement for cd
+# Usage: cd [directories...]
+# If omitted, goes to home directory
+# Otherwise treats each word as a segment running prefix before attempting each segment. Fails fast, any bad segment will cause it to return to starting PWD.
 #
 # Environment: Relies on $_CD_MOD_PRE and $_CD_MOD_POST variables
 # for configuration. Prefixes cd+ command with PRE variable @-expanded
 # and then runs commands in $_CD_MOD_POST. Commands are separated by --
 #
-# cutejs (Astrid Fesz-Nguyen)
+# dependencies
+#   ...*technically* none, but it's sort of worthless without tryhard in $CD_MOD_PRE
+#
+# 4strid (Astrid Fesz-Nguyen)
 # 2019-02-15
 
 cd+ () {
+  local -a DEST
   local -a PRE
   local -a POST
-  local DEST=~
-  [[ $1 ]] && DEST="$1"
+  local FAILED=0
+  local START="$PWD"
+  local PREV="$OLDPWD"
+  local PREV2="$OLDPWD2"
+
+  # woo extra step of history
+  if [[ $1 == "--" ]]; then
+    DEST=("$PREV2")
+  elif (( $# )); then
+    DEST=("$@")
+  else
+    DEST=("$HOME")
+  fi
   [[ _CD_MOD_PRE ]] && PRE+=(${_CD_MOD_PRE[@]})
   [[ _CD_MOD_POST ]] && POST+=(${_CD_MOD_POST[@]})
 
-  ${PRE[@]} cd "$DEST" && {
+  # run prefix on each segment of path
+  for SEG in ${DEST[@]} ; do
+    # fail fast
+    (( $FAILED )) || {
+      ${PRE[@]} cd "$SEG"
+      FAILED=$?
+    }
+  done
+
+  # go back if something went wrong
+  if (( $FAILED )); then
+    cd "$START"
+    echo "You can't get there from here" 1>&2
+    export OLDPWD="$PREV"
+    return 127
+  # run post commands
+  else
     local -a CMD
-    local DONE=
+    local ERROR=
     for FRAG in ${POST[@]} ; do
       if [[ "$FRAG" != '--' ]] ; then
         CMD+=("$FRAG")
       else
-        ${CMD[@]} || DONE=$?
-        [[ $DONE ]] && return $DONE
+        # run command
+        ${CMD[@]} || ERROR=$?
+        [[ $ERROR ]] && return $ERROR
+        # make room for next command
         CMD=()
       fi
     done
-  [[ $CMD ]] && ${CMD[@]}
-  } 
+    # final remaining command
+    [[ $CMD ]] && ${CMD[@]}
+
+    export OLDPWD2="$PREV"
+    export OLDPWD="$START"
+  fi
 }
 
 #
@@ -345,8 +441,12 @@ cd+ () {
 #
 # Turn it up a notch!
 #
+# (lol this is honestly extremely overkill, but i guess i *really* wanted cd+ to be general purpose)
+# (like seriously, why on earth do i not just set _CD_MOD_PRE and _CD_MOD_POST directly ???)
+#
 # 2019-02-14
-# cutejs (Astrid Fesz-Nguyen)
+# 4strid (Astrid Fesz-Nguyen IV)
+
 cdmod () {
   local -a PRE=()
   local -a POST=()
@@ -411,8 +511,30 @@ EOF
   export _CD_MOD_POST=( ${POST[@]})
 }
 
+# cat_or_ls ()
+#
+# 4strid (Astrid Fesz-Nguyen IV)
+# 2019
+
 cat_or_ls () {
-  # this admittedly acts weird if you call just `cat', but I can just use $CAT
+  if [[ ! $1 ]]; then
+    $CAT
+  elif [[ -f $1 ]]; then
+    $CAT "$@"
+  elif [[ -d $1 ]]; then
+    $LS "$@"
+  else
+    echo "$1: Not a file or directory" 1>&2
+    return 127
+  fi
+}
+
+# ls_or_cat ()
+#
+# 4strid (Astrid Fesz-Nguyen IV)
+# 2019
+
+ls_or_cat () {
   if [[ ! $1 ]] || [[ $1 = -* ]]; then
     $LS "$@"
   elif [[ -d $1 ]]; then
@@ -425,76 +547,97 @@ cat_or_ls () {
   fi
 }
 
+# vim_or_cd ()
+#
+# oh bash, you know me so well
+#
+# 4strid (Astrid Fesz-Nguyen IV)
+# 2019
+
 vim_or_cd () {
-  if [[ ! $1 ]]; then
-  $EDITOR
-  elif [[ -f $1 ]]; then
-    $EDITOR "$@"
+  if [[ $1 == -* ]]; then
+    $EDITOR $@
+  elif [[ ! $1 ]]; then
+    $EDITOR
   elif [[ -d $1 ]]; then
-  cd+ $1
+    cd+ $1
   else
-    echo "$1: Not a file or directory" 1>&2
-    return 127
+    $EDITOR "$@"
   fi
 }
+
+# cd_or_vim
+#
+# you know me all too well
+#
+# 4strid (Astrid Fesz-Nguyen IV)
+# 2019
 
 cd_or_vim () {
   if [[ ! $1 ]]; then
-  cd+
+    cd+
   elif [[ -f $1 ]]; then
     $EDITOR "$@"
   else
-  cd+ "$1"
+    cd+ "$@"
   fi
 }
 
-lib () {
-  local FOUND=`\
-    tryhard -r ls lib 2>/dev/null ||\
-    tryhard -U ls lib 2>/dev/null ||\
-  `
-  [[ $FOUND ]] && cd $FOUND
-}
-
-src () {
-  local FOUND=`\
-    tryhard -r ls src 2>/dev/null ||\
-    tryhard -U ls src 2>/dev/null ||\
-  `
-  [[ $FOUND ]] && cd $FOUND
-}
-
-#(Disc|C)harging, 
+# determine if charging or not
+#
+# dependencies
+#   attempt
+#   /bin/acpi
+#
+# 4strid (Astrid Fesz-Nguyen IV)
+# 2019
 
 _bat_match () {
-  [[ `acpi -i` =~ (Discharging|Charging|Unknown|Not charging),\ ([0-9]{1,3})%.*(remaining|until\ charged|.) ]]
+  [[ `attempt acpi -i` =~ (Discharging|Charging|Unknown|Not charging),\ ([0-9]{1,3})%.*(remaining|until\ charged|.) ]]
 }
+
+# used in my terminal prompt. The @ sign is a battery indicator ^_^
+#
+# dependencies
+#   _bat_match
+#
+# 4strid (Astrid Fesz-Nguyen IV)
+# 2019
 
 batcolor () {
   _bat_match
   local CHARGE=${BASH_REMATCH[1]}
   local NUM=${BASH_REMATCH[2]}
   # hardcoded to pink for now
-  local COLOR=$'\033[1;35m'
+  local COLOR=$'\033[1;35m' # "bold purple"
   [[ $BASH_REMATCH ]] && {
     if [[ $CHARGE == Discharging ]]; then
       if (( $NUM <= 10 )); then
-        COLOR=$'\033[1;31m'
+        COLOR=$'\033[1;31m' # Critical = red
       elif (( $NUM <= 42 )); then
-        COLOR=$'\033[1;33m'
+        COLOR=$'\033[1;33m' # Warning = yellow
       else
-        COLOR=$'\033[1;32m'
+        COLOR=$'\033[1;32m' # Still Good = green
       fi
     elif [[ $CHARGE == 'Unknown' ]]; then
-      COLOR=$'\033[1;34m'
+      COLOR=$'\033[1;34m' # Unknown = purple
     else
-      if (( $NUM <= 75 )); then
-        COLOR=$'\033[0;34m'
+      if (( $NUM <= 85 )); then
+        COLOR=$'\033[0;34m' # Charging = blue
       fi
     fi
   }
   echo $COLOR
 }
+
+# like acpi but with colors
+#
+# dependencies
+#   _bat_match
+#   batcolor
+#
+# 4strid (Astrid Fesz-Nguyen IV)
+# 2019
 
 bat () {
   _bat_match
@@ -505,11 +648,99 @@ bat () {
   echo `batcolor`${MSG}${RESET}
 }
 
+# whatbranch ()
 #
 # bash/git integration that's "good enough"
 #
+# dependencies
+#   /bin/git
+#   /bin/grep
+#
+# 4strid (Astrid Fesz-Nguyen IV)
 # 2019-08-19
 
 whatbranch ()  {
-  git branch 2>/dev/null | grep -s --no-filename '*' || true
+  git branch 2>/dev/null | grep -s --no-filename '*' || :
+}
+
+
+# setadd ()
+#
+# don't ever add me or my son to the $PATH again
+#
+# 4strid (Astrid Fesz-Nguyen IV)
+# 2019-09-15
+
+setadd () {
+  local SET="$1"
+  shift
+  for ADD in "$@" ; do
+    if [[ ! $SET ]]; then
+      SET="$ADD"
+    elif [[ $SET != *$ADD* ]]; then
+      SET="$SET:$ADD"
+    fi
+  done
+  echo $SET
+}
+
+# somewhat misguided first try at setadd
+# (left as a relic of abusing eval to set variables)
+#
+# 4strid (Astrid Fesz-Nguyen IV)
+# 2019-09-15
+
+setappend () {
+  local SETNAME="$1"
+  local SETREF="\$$SETNAME"
+  local SET=`eval echo $SETREF`
+
+  local VALUE="$2"
+
+  if [[ ! $SET ]]; then
+    eval $SETNAME=$VALUE
+  elif [[ $SET != *$VALUE* ]]; then
+    eval $SETNAME="$SET:$VALUE"
+  fi
+}
+
+#
+# screenshot
+#
+# take a picture, it'll last longer
+#
+# dependencies
+#   /bin/xwd
+#   /bin/convert
+#
+# 4strid (Astrid Fesz-Nguyen IV)
+# 2019-11-17
+#
+# (duplicated in ~/bin/screenshot)
+
+screenshot () {
+  local ONE=0
+  local DIR="$HOME/doc/screenshots"
+  local FILE="${DIR}/`date +%F-%I.%M.%S-%P`.png"
+  OPTIND=1
+  while getopts "1D:" OPT; do
+    case $OPT in
+    1)
+      ONE=1
+      ;;
+    D)
+      DIR=$OPTARG
+      ;;
+    *)
+      return 1
+      ;;
+    esac
+  done
+
+  [[ ! -d $DIR ]] && mkdir -p "$DIR"
+  if (( $ONE )); then
+    xwd | convert xwd:- png:- > $FILE
+  else
+    xwd -root -display :0 | convert xwd:- png:- > $FILE
+  fi
 }
