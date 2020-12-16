@@ -486,10 +486,10 @@ batcolor () {
         COLOR=$'\033[1;32m'
       fi
     elif [[ $CHARGE == 'Unknown' ]]; then
-      COLOR=$'\033[0;35m'
+      COLOR=$'\033[1;34m'
     else
       if (( $NUM <= 75 )); then
-        COLOR=$'\033[1;34m'
+        COLOR=$'\033[0;34m'
       fi
     fi
   }
