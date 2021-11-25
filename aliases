@@ -43,7 +43,7 @@ alias lsd='$LS --group-directories-first'
 # defaults
 alias info='info --vi-keys'
 alias lynx='lynx --session ~/.lynxsession'
-alias grep='grep --exclude-dir=.git --exclude-dir=node_modules'
+alias grep='grep --exclude-dir="**/.git" --exclude-dir="**/node_modules"'
 alias cp='cp -i'
 alias mv='mv -i'
 alias lessc='less -R'
@@ -73,13 +73,15 @@ alias suspend='sudo systemctl suspend'
 # try hard
 alias dive='tryhard -r vim_or_cd'
 
-# cute
+# clocks
+alias whattime='date +%l:%M%P'
 alias clock='tty-clock -s -t -c -C 7'
 
 # x gon give it to ya
 alias desktop='cd ~ && xinit'
 alias xchromium='xinit /usr/bin/chromium'
 alias minecraft='xinit /usr/bin/minecraft-launcher'
+alias files='thunar'
 
 # config
 alias vimrc='vim ~/.vimrc'

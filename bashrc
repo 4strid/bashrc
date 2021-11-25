@@ -20,7 +20,7 @@ import -v functions
 import -v exports
 import -v aliases
 import -v shortcuts
-import -v reflect
+import -v reflekt
 
 # If not running interactively, don't do anything (else)
 [[ $- != *i* ]] && return

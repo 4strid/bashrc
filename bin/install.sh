@@ -9,7 +9,7 @@ function import {
   shift \$((\$OPTIND - 1))
 
   # hardcoded for now
-  for T in "." "./lib" "\$HOME/lib" "/usr/lib" "/lib" "./src"; do
+  for T in "." "./lib" "\$HOME/src" "\$HOME/lib" "./src"; do
     local SRC="\$T/\$1"
     if [[ -f "\$SRC" ]]; then
       local ORIGPWD=\$PWD
