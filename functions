@@ -11,7 +11,7 @@
 # (print to stderr)
 #
 # 2019-09-19
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 
 scold () {
   echo "$*" 1>&2
@@ -22,7 +22,7 @@ scold () {
 # don't cry over spilled milk
 #
 # 2019-09-19
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 
 attempt () {
   $@ 2>/dev/null
@@ -38,7 +38,7 @@ attempt () {
 #
 # Usage: tryhard [options] CMD TARGET
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019-02-14
 
 # TODO: add .tryhardignore config file (mostly for .git and node_modules lol)
@@ -208,7 +208,7 @@ EOF
 #  dependencies
 #    tryhard
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019-08-20
 
 tryfind () {
@@ -280,7 +280,7 @@ lastcmd () {
 #   lastcmd
 #
 # 2019-11-16
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 
 doless () {
   local LASTCMD=`lastcmd`
@@ -296,7 +296,7 @@ doless () {
 # Returns 0 if not in a subshell, otherwise prints depth
 # and returns that number as an error code
 #
-# 4strid (Astrid Fesz-Nguyen)
+# 4strid (Astrid Ivy)
 # 2019-01-21
 
 inception () {
@@ -326,7 +326,7 @@ inception () {
 #
 # Usage: $ <TEST_CMD> ; ok [MESSAGE...]
 #
-# 4strid (Astrid Fesz-Nguyen)
+# 4strid (Astrid Ivy)
 # 2019-01-21
 
 ok () {
@@ -375,7 +375,7 @@ is_tty () {
 # dependencies
 #   ...*technically* none, but it's sort of worthless without tryhard in $CD_MOD_PRE
 #
-# 4strid (Astrid Fesz-Nguyen)
+# 4strid (Astrid Ivy)
 # 2019-02-15
 
 cd+ () {
@@ -445,7 +445,7 @@ cd+ () {
 # (like seriously, why on earth do i not just set _CD_MOD_PRE and _CD_MOD_POST directly ???)
 #
 # 2019-02-14
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 
 cdmod () {
   local -a PRE=()
@@ -513,7 +513,7 @@ EOF
 
 # cat_or_ls ()
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019
 
 cat_or_ls () {
@@ -531,7 +531,7 @@ cat_or_ls () {
 
 # ls_or_cat ()
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019
 
 ls_or_cat () {
@@ -551,7 +551,7 @@ ls_or_cat () {
 #
 # oh bash, you know me so well
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019
 
 vim_or_cd () {
@@ -570,7 +570,7 @@ vim_or_cd () {
 #
 # you know me all too well
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019
 
 cd_or_vim () {
@@ -589,7 +589,7 @@ cd_or_vim () {
 #   attempt
 #   /bin/acpi
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019
 
 _bat_match () {
@@ -601,7 +601,7 @@ _bat_match () {
 # dependencies
 #   _bat_match
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019
 
 batcolor () {
@@ -636,7 +636,7 @@ batcolor () {
 #   _bat_match
 #   batcolor
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019
 
 bat () {
@@ -656,7 +656,7 @@ bat () {
 #   /bin/git
 #   /bin/grep
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019-08-19
 
 whatbranch ()  {
@@ -668,7 +668,7 @@ whatbranch ()  {
 #
 # don't ever add me or my son to the $PATH again
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019-09-15
 
 setadd () {
@@ -687,7 +687,7 @@ setadd () {
 # somewhat misguided first try at setadd
 # (left as a relic of abusing eval to set variables)
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019-09-15
 
 setappend () {
@@ -713,7 +713,7 @@ setappend () {
 #   /bin/xwd
 #   /bin/convert
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019-11-17
 #
 # (duplicated in ~/bin/screenshot)
