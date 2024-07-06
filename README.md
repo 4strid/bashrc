@@ -2,30 +2,32 @@
 
 ## queen of dotfiles
 
-### Installation
+### How to use
 
-There are 2 installers available in the `bin` directory: `link.sh` and `install.sh`
+Source `bashrc` in your .bashrc file.
 
-Link creates a symlink from wherever you cloned this repo to `~/lib/bashrc`. This is the method
-I use so I can keep my computers in sync with git. Since they're links, you can't move the files
-without relinking.
+### These scripts are Evil
 
-Install copies these files into `~/lib/bashrc`. You can safely delete this repo, but you'll
-have to clone and run install again to get fresh baked bashrc.
+My configuration changes a lot of default shell behavior including the
+behavior of `cd` and other things. To avoid surprises, and to generally
+know what you're signing up for you should probably read the scripts
+before using any of it let alone all of it.
 
 ### Honestly?
 
 You might be better served just copying the bits you like into your own .bashrc
-Especially interesting are the `cd+` and `tryhard` functions! You may find them quite useful,
-if nothing else.
+Especially interesting are the `cd+` and `tryhard` functions as well as
+my jazzy PS1 prompt.  You may find them... interesting, if nothing else.
 
-I've annotated everything with dependencies so copy/install those too or stuff will break.
+I've annotated everything with dependencies so copy/install those too or
+stuff will break.
 
-(Mostly I want this in "the cloud" to keep my environment the same between computers.)
+(Mostly I want this in "the cloud" to keep my environment the same
+between computers.)
 
 *With love,*
 
-- Astrid
+- Astrid Ivy
 
 
 #### See also

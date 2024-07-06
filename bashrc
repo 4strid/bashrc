@@ -3,30 +3,26 @@
 #
 # imagine if this was all in one file x_x
 #
-# dependencies
-#   cutestrap/import
-#   [lol, i mean... the whole thing, right?]
-#
-# cutejs (River Fesz-Nguyen)
+# 4strid (Astrid Ivy) 
 # 2019-01-21
+# major revision 2023-12-27
 #
 ######
 
-# disable cd mods while loading bashrc
-# (fails on first run so ignore stderr)
-cdmod -p -P 2>/dev/null
+# locate bashrc directory
+BASHRC=$(dirname $(realpath ${BASH_SOURCE[0]}))
 
-import -v functions
-import -v exports
-import -v aliases
-import -v shortcuts
-import -v reflekt
+source $BASHRC/functions
+source $BASHRC/exports
+source $BASHRC/aliases
+source $BASHRC/shortcuts
+source $BASHRC/reflekt
 
 # If not running interactively, don't do anything (else)
 [[ $- != *i* ]] && return
 
-import -v shopts
-import -v danger
+source $BASHRC/shopts
+source $BASHRC/danger
 
 attempt is_tty && setfont Tamsyn8x16r
 

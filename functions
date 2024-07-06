@@ -296,7 +296,7 @@ doless () {
 # Returns 0 if not in a subshell, otherwise prints depth
 # and returns that number as an error code
 #
-# 4strid (Astrid Fesz-Nguyen)
+# 4strid (Astrid Ivy)
 # 2019-01-21
 
 inception () {
@@ -332,7 +332,7 @@ inception () {
 #
 # Usage: $ <TEST_CMD> ; ok [MESSAGE...]
 #
-# 4strid (Astrid Fesz-Nguyen)
+# 4strid (Astrid Ivy)
 # 2019-01-21
 
 ok () {
@@ -381,7 +381,7 @@ is_tty () {
 # dependencies
 #   ...*technically* none, but it's sort of worthless without tryhard in $CD_MOD_PRE
 #
-# 4strid (Astrid Fesz-Nguyen)
+# 4strid (Astrid Ivy)
 # 2019-02-15
 
 cd+ () {

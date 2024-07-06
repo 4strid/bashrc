@@ -13,6 +13,8 @@
 
 alias sob="source $HOME/.bashrc"
 
+BASHRC="$(dirname $(realpath ${BASH_SOURCE[0]}))"
+
 _reflect_edit () {
   local SECTION=$1
   local JUMP=$2
@@ -25,17 +27,12 @@ _reflect_edit () {
     else JUMP="+/${JUMP}"
     fi
   fi
-  # absolute madness:
-  # 1. use tryhard mode to allow for typing partial names of sections e.g. "bashrc fun"
-  # 2. do a ridiculous dance to set the filetype
-  # 3. (potentially partial) filename
-  tryhard -D "$HOME/lib $HOME/src" -g\
-    vim -S `tryfind -1 -R -D "$HOME $HOME/lib/bashrc $HOME/src/bashrc" lib/set_ft_sh.vim`\ $JUMP\
-    bashrc/$SECTION
+  
+  tryhard -g vim -S "$BASHRC\/.bashvimrc"\ $JUMP "$BASHRC\/$SECTION"
 }
 
 _reflect_source () {
-  tryhard -D "$HOME/lib $HOME/src" -g source "bashrc/$1"
+  tryhard -g source "$BASHRC\/$1"
 }
 
 # bashrc ()
@@ -47,7 +44,7 @@ _reflect_source () {
 #   -s sources the file
 #   otherwise edits then sources
 # 
-# cutejs (Astrid Fesz-Nguyen)
+# 4strid (Astrid Ivy)
 # 2019-02-23
 
 bashrc () {
