@@ -6,8 +6,8 @@
 #
 ######
 
-export PATH=`setadd $PATH $HOME/bin $HOME/.npm/packages/bin`
-export LS='ls --color=auto'
+export PATH=`setadd $HOME/bin $HOME/.npm/packages/bin $PATH`
+export LS='ls --color=auto --hide="lost+found"'
 export CD='cd'
 export CAT='cat'
 export EDITOR='vim'

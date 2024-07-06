@@ -11,7 +11,7 @@
 # (print to stderr)
 #
 # 2019-09-19
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 
 scold () {
   echo "$*" 1>&2
@@ -22,7 +22,7 @@ scold () {
 # don't cry over spilled milk
 #
 # 2019-09-19
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 
 attempt () {
   $@ 2>/dev/null
@@ -38,7 +38,7 @@ attempt () {
 #
 # Usage: tryhard [options] CMD TARGET
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019-02-14
 
 # TODO: add .tryhardignore config file (mostly for .git and node_modules lol)
@@ -208,7 +208,7 @@ EOF
 #  dependencies
 #    tryhard
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019-08-20
 
 tryfind () {
@@ -280,7 +280,7 @@ lastcmd () {
 #   lastcmd
 #
 # 2019-11-16
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 
 doless () {
   local LASTCMD=`lastcmd`
@@ -308,7 +308,13 @@ inception () {
 
   # this APPEARs to only be set in xterm
   # and conveniently, not in an SSH session!
-  [[ $XTERM_VERSION ]] && DEPTH=$(($DEPTH - 2))
+  #[[ $XTERM_VERSION ]] && DEPTH=$(($DEPTH - 2))
+  #  2022-11 new canary
+  #[[ $XTERM_LOCALE ]] && DEPTH=$(($DEPTH - 2))
+  # nvm ... for some reason this is already 1 in xterm
+  # conveniently , alacritty also sets a useful
+  # canary we can use ><
+  [[ $ALACRITTY_LOG ]] && DEPTH=$(($DEPTH - 2))
   
   (( $DEPTH == 0 )) || echo "$DEPTH>"
   return $DEPTH
@@ -445,7 +451,7 @@ cd+ () {
 # (like seriously, why on earth do i not just set _CD_MOD_PRE and _CD_MOD_POST directly ???)
 #
 # 2019-02-14
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 
 cdmod () {
   local -a PRE=()
@@ -513,7 +519,7 @@ EOF
 
 # cat_or_ls ()
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019
 
 cat_or_ls () {
@@ -531,12 +537,12 @@ cat_or_ls () {
 
 # ls_or_cat ()
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019
 
 ls_or_cat () {
   if [[ ! $1 ]] || [[ $1 = -* ]]; then
-    $LS "$@"
+    $LS --hide="lost+found" "$@"
   elif [[ -d $1 ]]; then
     $LS "$@"
   elif [[ -f $1 ]]; then
@@ -551,16 +557,16 @@ ls_or_cat () {
 #
 # oh bash, you know me so well
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019
 
 vim_or_cd () {
   if [[ $1 == -* ]]; then
     $EDITOR $@
-  elif [[ ! $1 ]]; then
+  elif [[ ! "$1" ]]; then
     $EDITOR
-  elif [[ -d $1 ]]; then
-    cd+ $1
+  elif [[ -d "$1" ]]; then
+    cd+ "$1"
   else
     $EDITOR "$@"
   fi
@@ -570,7 +576,7 @@ vim_or_cd () {
 #
 # you know me all too well
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019
 
 cd_or_vim () {
@@ -589,7 +595,7 @@ cd_or_vim () {
 #   attempt
 #   /bin/acpi
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019
 
 _bat_match () {
@@ -601,7 +607,7 @@ _bat_match () {
 # dependencies
 #   _bat_match
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019
 
 batcolor () {
@@ -636,7 +642,7 @@ batcolor () {
 #   _bat_match
 #   batcolor
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019
 
 bat () {
@@ -656,7 +662,7 @@ bat () {
 #   /bin/git
 #   /bin/grep
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019-08-19
 
 whatbranch ()  {
@@ -668,7 +674,7 @@ whatbranch ()  {
 #
 # don't ever add me or my son to the $PATH again
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019-09-15
 
 setadd () {
@@ -687,7 +693,7 @@ setadd () {
 # somewhat misguided first try at setadd
 # (left as a relic of abusing eval to set variables)
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019-09-15
 
 setappend () {
@@ -713,7 +719,7 @@ setappend () {
 #   /bin/xwd
 #   /bin/convert
 #
-# 4strid (Astrid Fesz-Nguyen IV)
+# 4strid (Astrid Ivy)
 # 2019-11-17
 #
 # (duplicated in ~/bin/screenshot)
@@ -743,4 +749,42 @@ screenshot () {
   else
     xwd -root -display :0 | convert xwd:- png:- > $FILE
   fi
+}
+
+#
+# sequence
+#
+# dependencies:
+#   - attempt
+#
+# spits out each file of a directory in a sequence
+#
+# 4strid (Astrid Ivy)
+# 2019-11-17
+#
+
+sequence () {
+  local DIR="$1"
+  local SEQ="$1/.sequence"
+  local TEMP="$1/.temp"
+  local NEXT=
+
+  if [[ -d $DIR ]]; then
+    if [[ ! -f $SEQ ]]; then
+      ls -1 $DIR > $SEQ
+    fi
+
+    NEXT=`head -n 1 $SEQ`
+    tail -n +2 $SEQ > $TEMP
+    mv -f $TEMP $SEQ
+    echo $NEXT >> $SEQ
+
+    echo "$DIR/$NEXT" 
+    #( eventually 10 rm $SEQ 2>/dev/null & )
+
+    return 0
+  fi
+
+  echo "usage: sequence <dir>"
+  return 127
 }

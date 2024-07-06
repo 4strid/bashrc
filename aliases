@@ -4,8 +4,6 @@
 # conventions, common mistakes, and cool new powers
 #
 # dependencies
-#   cd_or_vim
-#   vim_or_cd
 #   cat_or_ls
 #   ls_or_cat
 #   tryhard
@@ -25,8 +23,9 @@
 #######
 
 # i mix these up all the time ok?...
-alias cd='cd_or_vim'
-alias vim='vim_or_cd'
+#alias cd='cd_or_vim'
+#alias vim='vim_or_cd'
+alias cd='cd+'
 alias cat='cat_or_ls'
 alias ls='ls_or_cat'
 
@@ -47,7 +46,10 @@ alias grep='grep --exclude-dir="**/.git" --exclude-dir="**/node_modules"'
 alias cp='cp -i'
 alias mv='mv -i'
 alias lessc='less -R'
+alias lessh='LESSOPEN="| /bin/highlight -O xterm256 %s" LESS=" -R " less'
+alias hi='lessh'
 alias tree="tree -C -I 'node_modules|.git'"
+alias tree~="tree -C -I 'node_modules|.git|data' ~"
 
 # system
 alias wifi='nmcli device wifi'
@@ -57,28 +59,26 @@ alias cmdlist='compgen -A function -abck'
 alias funlist='compgen -A function -a'
 alias backlight='light -S'
 alias stop='kill' #lol i just get this wrong every time
-alias etc='tryhard -e vim'
 
 # sudo
 alias pacman='sudo pacman'
 alias systemctl='sudo systemctl'
 alias visudo='sudo visudo'
-alias mount='sudo mount'
+#alias mount='sudo mount'
+alias umount='sudo umount'
 
 # power
 alias shutdown='sudo systemctl poweroff' #*technically* dangerous; overrides shutdown
 alias restart='sudo systemctl reboot'
 alias suspend='sudo systemctl suspend'
 
-# try hard
-alias dive='tryhard -r vim_or_cd'
-
 # clocks
 alias whattime='date +%l:%M%P'
-alias clock='tty-clock -s -t -c -C 7'
+alias ttyclock='tty-clock -s -t -c -C 5'
 
 # x gon give it to ya
 alias desktop='cd ~ && xinit'
+alias fancy='cd ~ && _X_TRANSPARENCY=yes xinit'
 alias xchromium='xinit /usr/bin/chromium'
 alias minecraft='xinit /usr/bin/minecraft-launcher'
 alias files='thunar'
@@ -86,3 +86,7 @@ alias files='thunar'
 # config
 alias vimrc='vim ~/.vimrc'
 alias menu='vim ~/.blackbox/menu'
+
+#vim
+alias vimsplit='vim -O2 -c "term++curwin" -c "wincmd l" -c  "term++curwin" -c "wincmd h"'
+alias splitvim='vim -O2 -c "term++curwin" -c "wincmd l" -c  "term++curwin" -c "wincmd h"'
