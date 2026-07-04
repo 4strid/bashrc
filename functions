@@ -664,6 +664,50 @@ whatbranch ()  {
 }
 
 
+# whatbrain ()
+#
+# PS1 as llm banner: which brain answers when you speak to ivy.
+# the newest letter in @ivy/runtime/model is the answer; failing
+# that, the provider's default model — same chain as llm.js.
+# (gpt-5.5 is providers/openai.js's default). claude models wear
+# their family name (claude-opus-4-8 → Opus, any future family free);
+# gpt models go by their gpt-5.x name; the aaa llm goes by AAA.
+#
+# dependencies
+#   iv/os letters under $IVY_BASE/mail/inbox/runtime (default /ivy)
+#
+# claude, for 4strid (Astrid Ivy)
+# 2026-07-03
+
+_brainletter () {
+  local DIR="${IVY_BASE:-/ivy}/mail/inbox/runtime/$1"
+  [[ -d $DIR ]] || return
+  local FILE=`ls "$DIR" 2>/dev/null | tail -1`
+  [[ $FILE ]] || return
+  tr -d '\n' < "$DIR/$FILE" \
+    | sed -e 's/.*<letter[^>]*>//' -e 's|</letter>.*||' \
+          -e 's/.*<!\[CDATA\[//'  -e 's/\]\]>.*//'
+}
+
+whatbrain () {
+  local MODEL=`_brainletter model`
+  if [[ ! $MODEL ]]; then
+    local LLM=`_brainletter llm`
+    LLM="${LLM:-${IVY_LLM:-openai}}"
+    case "$LLM" in
+      claude) MODEL="${IVY_CLAUDE_MODEL:-claude-opus-4-8}" ;;
+      openai) MODEL=gpt-5.5 ;;
+      *)      MODEL="$LLM" ;;
+    esac
+  fi
+  case "$MODEL" in
+    claude-*) MODEL="${MODEL#claude-}"; MODEL="${MODEL%%-*}"; echo "${MODEL^}" ;;
+    aaa)      echo AAA ;;
+    *)        echo "$MODEL" ;;
+  esac
+}
+
+
 # setadd ()
 #
 # don't ever add me or my son to the $PATH again

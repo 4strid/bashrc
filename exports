@@ -37,6 +37,7 @@ export C_RESET=$reset
 #   whatbranch
 #   batcolor
 #   inception
+#   whatbrain
 #   [danger/time alias]
 #   /bin/vim
-export PS1=$'\[${red}\]`ok`\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \[${light}\]\w\[${pink}\]]`inception`\[${reset}\]$ '
+export PS1=$'\[${red}\]`ok`\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]`whatbrain` \[${light}\]\w\[${pink}\]]`inception`\[${reset}\]\n* '
