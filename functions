@@ -668,10 +668,11 @@ whatbranch ()  {
 #
 # PS1 as llm banner: which brain answers when you speak to ivy.
 # the newest letter in @ivy/runtime/model is the answer; failing
-# that, the provider's default model — same chain as llm.js.
-# (gpt-5.5 is providers/openai.js's default). claude models wear
-# their family name (claude-opus-4-8 → Opus, any future family free);
-# gpt models go by their gpt-5.x name; the aaa llm goes by AAA.
+# that, the provider's default model — same chain as llm.js
+# (claude is the default brain, claude-sonnet-5 its default model;
+# no openai money). claude models wear their family name
+# (claude-sonnet-5 → Sonnet, any future family free); gpt models
+# go by their gpt-5.x name; the aaa llm goes by AAA.
 #
 # dependencies
 #   iv/os letters under $IVY_BASE/mail/inbox/runtime (default /ivy)
@@ -693,9 +694,9 @@ whatbrain () {
   local MODEL=`_brainletter model`
   if [[ ! $MODEL ]]; then
     local LLM=`_brainletter llm`
-    LLM="${LLM:-${IVY_LLM:-openai}}"
+    LLM="${LLM:-${IVY_LLM:-claude}}"
     case "$LLM" in
-      claude) MODEL="${IVY_CLAUDE_MODEL:-claude-opus-4-8}" ;;
+      claude) MODEL="${IVY_CLAUDE_MODEL:-claude-sonnet-5}" ;;
       openai) MODEL=gpt-5.5 ;;
       *)      MODEL="$LLM" ;;
     esac
@@ -705,6 +706,23 @@ whatbrain () {
     aaa)      echo AAA ;;
     *)        echo "$MODEL" ;;
   esac
+}
+
+
+# spent ()
+#
+# PS1 as token meter: what this ivy session has read and said.
+# the daemon exports IVY_TOKENS after every reply — last turn in→out,
+# then Σ session total; a leading ~ means char/4 estimate, no ~ means
+# the provider's own usage numbers. every turn re-sends the whole
+# window, so Σ grows quadratically — when it climbs, deselect.
+# a shell that isn't ivy's has no IVY_TOKENS and prints nothing.
+#
+# claude, for 4strid (Astrid Ivy)
+# 2026-07-04
+
+spent () {
+  [[ $IVY_TOKENS ]] && echo " ${IVY_TOKENS}"
 }
 
 

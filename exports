@@ -6,7 +6,7 @@
 #
 ######
 
-export PATH=`setadd $PATH $HOME/bin $HOME/.npm/packages/bin`
+export PATH=`setadd $PATH $HOME/bin ./bin /ivos/bin $HOME/.npm/packages/bin`
 export LS='ls --color=auto'
 export CD='cd'
 export CAT='cat'
@@ -38,6 +38,7 @@ export C_RESET=$reset
 #   batcolor
 #   inception
 #   whatbrain
+#   spent
 #   [danger/time alias]
 #   /bin/vim
-export PS1=$'\[${red}\]`ok`\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]`whatbrain` \[${light}\]\w\[${pink}\]]`inception`\[${reset}\]\n* '
+export PS1=$'\[${red}\]`ok` \[${purple}\]`/ivy/bin/tools/tags -H`\n\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]`whatbrain` \[${light}\]\w\[${pink}\]]`inception`\[${reset}\] \[${light}\]`spent`\[${reset}\]\n$ '

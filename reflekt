@@ -19,6 +19,10 @@ _reflect_edit () {
   local SECTION=$1
   local JUMP=$2
 
+  if [[ "$1" == ".bashrc" ]]; then
+    vim ~/.bashrc
+  fi
+
   # absolute nonsense: if searching file `functions' we want to land on the definition
   # not the preceding block comment. otherwise we want to search anywhere in the line
   if [[ $JUMP ]]; then
