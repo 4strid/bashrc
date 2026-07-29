@@ -7,6 +7,9 @@
 ######
 
 export PATH=`setadd $HOME/bin $HOME/.npm/packages/bin $PATH`
+# so ~/eslint.config.js (and anything else outside a project) can
+# require globally-installed modules
+export NODE_PATH=`setadd $HOME/.npm/packages/lib/node_modules $NODE_PATH`
 export LS='ls --color=auto --hide="lost+found"'
 export CD='cd'
 export CAT='cat'
