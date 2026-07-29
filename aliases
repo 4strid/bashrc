@@ -61,8 +61,6 @@ alias backlight='light -S'
 alias stop='kill' #lol i just get this wrong every time
 
 # sudo
-alias pacman='sudo pacman'
-alias systemctl='sudo systemctl'
 alias visudo='sudo visudo'
 #alias mount='sudo mount'
 alias umount='sudo umount'
