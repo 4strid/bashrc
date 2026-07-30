@@ -20,7 +20,9 @@
 #   /bin/xinit
 #   /bin/blackbox
 #   /bin/minecraft-launcher
+#   /bin/claude
 #   [must be a systemctl flavor of linux]
+#   [/ivos, the iv/os dev tree]
 #
 #######
 
@@ -86,3 +88,10 @@ alias files='thunar'
 # config
 alias vimrc='vim ~/.vimrc'
 alias menu='vim ~/.blackbox/menu'
+
+# iv/os
+# IVY_BASE points at the dev tree so these run the repo, not the deployed copy;
+# see NODE_ENV in exports for the other half of that story.
+alias clod='cd /ivos && claude'
+alias iv="IVY_BASE='/ivos' node /ivos/run.js"
+alias ivy="IVY_BASE='/ivos' node /ivos/ivy.js"

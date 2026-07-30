@@ -17,6 +17,16 @@ export RM='rm'
 [[ -f /usr/lib/libstderred.so ]] &&
   export LD_PRELOAD=`setadd $LD_PRELOAD /usr/lib/libstderred.so`
 
+# Stop Claude Code asking the terminal to report mouse events. Without this it
+# emits ESC[?1000h + ESC[?1006h at startup and every click/wheel/drag comes back
+# as escape-sequence garbage in the prompt.
+export CLAUDE_CODE_DISABLE_MOUSE=1
+
+# iv/os: which tree am i? dev (/ivos, the repo) unless told otherwise.
+# NODE_ENV=production picks the deployed copy at /ivy/ivos — say it out loud,
+# per-command (`NODE_ENV=production ivy`) or in the systemd unit. see root.js.
+export NODE_ENV=development
+
 red=$'\e[1;31m'
 pink=$'\e[1;35m'
 purple=$'\e[0;34m'

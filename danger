@@ -6,3 +6,7 @@
 
 alias timer='time'
 alias time='date +%l:%M%P'
+
+# rm -rf, shouted. ($RM in exports stays plain rm — the functions use the
+# variable, this is just for hands.)
+alias RM='rm -rf'
