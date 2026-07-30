@@ -1,7 +1,11 @@
 #
 # bashrc/screen
 #
-# the screen dance: over ssh, we always want to be in screen
+# everything that lives in a screen. two halves that meet in the middle:
+#
+# the dance    over ssh, we always want to be in screen
+# the little   v, c and g each get a screen of their own -- or, when the
+#  guys        dance already has us in one, a window of their own
 #
 # coming in   ssh lands you in the session, yanking it off whatever
 #             terminal had it before. no session yet? one is made.
@@ -90,4 +94,147 @@ screen_dance_out () {
   in_screen || return 0
   screen -X detach
   return 0
+}
+
+
+# _screen_exists ()
+#
+# is anybody home?
+#
+# Returns 0 if there is a session named exactly NAME. `screen -ls' lists
+# them one per line, tab indented, as "PID.NAME" -- and its own matching
+# is fuzzy (`vim foo' would happily find `vim foobar'), hence doing it
+# by hand
+#
+# Usage: _screen_exists NAME
+#
+# dependencies
+#   /bin/screen
+#   /bin/awk
+#
+# claude, for 4strid (Astrid Ivy)
+# 2026-07-30
+
+_screen_exists () {
+  screen -ls 2>/dev/null | awk -F'\t' -v NAME="$1" '
+    /^\t/ {
+      gsub(/[ \t]+$/, "", $2)
+      DOT = index($2, ".")
+      # the PID never has a dot in it, so the first one is the separator
+      if (DOT && substr($2, DOT + 1) == NAME) {
+        FOUND = 1
+      }
+    }
+    END { exit !FOUND }
+  '
+}
+
+# inscreen ()
+#
+# a screen of one's own
+#
+# Puts CMD somewhere it can be left running and come back to, under the
+# name NAME. Where that is depends on where we already are:
+#
+#   loose in a terminal   a session named NAME. Already one of those?
+#                         attach to it instead, stealing it off whatever
+#                         terminal had it (-D -r, the greedy form)
+#   inside the dance      a window named NAME in the session we're in,
+#                         because screens don't nest. Already one of
+#                         those? switch to it instead
+#
+# `screen -Q select' is the whole trick for windows: it switches to the
+# window and exits 0, or exits non-zero if there's no such window. -X
+# can't do this -- it exits 0 either way, whether the window was there
+# or not
+#
+# Slashes become colons on the way in. To screen 5 a slash is the
+# sessionowner separator, so `vim /etc/hosts' has it hunting for a user
+# named "vim " and giving up
+#
+# Usage: inscreen NAME CMD [ARGS...]
+#
+# dependencies
+#   scold
+#   in_screen
+#   _screen_exists
+#   /bin/screen
+#
+# claude, for 4strid (Astrid Ivy)
+# 2026-07-30
+
+inscreen () {
+  local NAME="${1//\//:}"
+  shift
+
+  command -v screen >/dev/null 2>&1 || {
+    scold "inscreen: no screen installed; running \`$1' the old fashioned way"
+    "$@"
+    return $?
+  }
+
+  if in_screen ; then
+    screen -Q select "$NAME" >/dev/null 2>&1 ||
+      screen -X screen -t "$NAME" "$@"
+    return $?
+  fi
+
+  if _screen_exists "$NAME"; then
+    screen -D -r "$NAME"
+  else
+    screen -S "$NAME" "$@"
+  fi
+}
+
+# screenify ()
+#
+# for the little guys whose name is just what you typed: `g cat pictures'
+# lands in "google cat pictures", and typing it again goes back there
+# rather than opening a second one
+#
+# Usage: screenify CMD [ARGS...]
+#
+# dependencies
+#   inscreen
+#
+# claude, for 4strid (Astrid Ivy)
+# 2026-07-30
+
+screenify () {
+  inscreen "$*" "$@"
+}
+
+# screenvim ()
+#
+# a vim of one's own
+#
+# One per set of files, so `v' always picks up where it left off instead
+# of opening the same file twice
+#
+# Filenames are canonicalized before going into the name, so that
+# ./index.js and ~/src/thing/index.js are the same vim and not two of
+# them. Bare `v' gets one plain old "vim"
+#
+# Usage: screenvim [FILES...]
+#        (though really: see `v' in bashrc/shortcuts)
+#
+# dependencies
+#   inscreen
+#   /bin/realpath
+#   /bin/vim
+#
+# claude, for 4strid (Astrid Ivy)
+# 2026-07-30
+
+screenvim () {
+  local -a FULL
+  local FILE
+  local NAME="vim"
+
+  for FILE in "$@" ; do
+    FULL+=("$(realpath -m "$FILE" 2>/dev/null || echo "$FILE")")
+  done
+  (( $# )) && NAME="vim ${FULL[*]}"
+
+  inscreen "$NAME" vim "$@"
 }
