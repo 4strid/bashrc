@@ -1,0 +1,6 @@
+#
+# bashrc/.gitignore
+#
+
+# claude code's scratch space: worktrees, local settings
+.claude/
