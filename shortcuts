@@ -5,15 +5,19 @@
 #
 # dependencies
 #   tryhard
-#   inscreen
-#   screenvim
+#   inscreen   [bashrc/screen]
+#   screenify  [bashrc/screen]
+#   screenvim  [bashrc/screen]
 #   ~/bin/google
+#   /bin/git
 #   /bin/screen
 #   ~/.npm/packages/bin/claude
 #
 #######
 
-alias g='google'
+# google, in a screen named after the search, so a page you meant to
+# come back to is still sitting there when you do
+alias g='screenify google'
 alias t='tryhard -g'
 alias T='tryhard -G -r'
 alias t!='tryhard -g `lastcmd`'
@@ -27,3 +31,11 @@ alias n='npm run'
 alias :q='exit'
 alias :e='v'
 alias :cd='cd'
+
+# git, typed at speed
+alias gl='git log'
+alias gs='git status'
+alias ga='git add'
+alias gaa='git add -A'
+alias gm='git commit -m'
+alias gp='git push'
