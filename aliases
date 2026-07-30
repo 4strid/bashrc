@@ -3,12 +3,16 @@
 #
 # conventions, common mistakes, and cool new powers
 #
+# this file is sourced *above* the `[[ $- != *i* ]] && return` guard in
+# bashrc, so everything here lands in scripts, cron jobs and coding agents
+# too -- not just in a terminal you are sitting at.
+#
+# so: nothing in this file may shadow a real binary or a shell builtin, and
+# nothing in it may call sudo. new names only. anything that overrides an
+# existing command goes in `danger`, which is below the guard.
+#
 # dependencies
-#   cat_or_ls
-#   ls_or_cat
 #   tryhard
-#   /bin/lynx
-#   /bin/grep
 #   /bin/tree
 #   /bin/nmcli
 #   /bin/light
@@ -18,16 +22,9 @@
 #   /bin/xinit
 #   /bin/blackbox
 #   /bin/minecraft-launcher
-#   [must be a systemctl flavor of linux]
+#   /bin/thunar
 #
 #######
-
-# i mix these up all the time ok?...
-#alias cd='cd_or_vim'
-#alias vim='vim_or_cd'
-alias cd='cd+'
-alias cat='cat_or_ls'
-alias ls='ls_or_cat'
 
 # dot dots
 alias ..='cd+ ..'
@@ -39,16 +36,12 @@ alias lsc='$LS --color=always'
 alias lsl='$LS -l -h'
 alias lsd='$LS --group-directories-first'
 
-# defaults
-alias info='info --vi-keys'
-alias lynx='lynx --session ~/.lynxsession'
-alias grep='grep --exclude-dir="**/.git" --exclude-dir="**/node_modules"'
-alias cp='cp -i'
-alias mv='mv -i'
+# less variants
 alias lessc='less -R'
 alias lessh='LESSOPEN="| /bin/highlight -O xterm256 %s" LESS=" -R " less'
 alias hi='lessh'
-alias tree="tree -C -I 'node_modules|.git'"
+
+# tree, but only my stuff
 alias tree~="tree -C -I 'node_modules|.git|data' ~"
 
 # system
@@ -59,16 +52,6 @@ alias cmdlist='compgen -A function -abck'
 alias funlist='compgen -A function -a'
 alias backlight='light -S'
 alias stop='kill' #lol i just get this wrong every time
-
-# sudo
-alias visudo='sudo visudo'
-#alias mount='sudo mount'
-alias umount='sudo umount'
-
-# power
-alias shutdown='sudo systemctl poweroff' #*technically* dangerous; overrides shutdown
-alias restart='sudo systemctl reboot'
-alias suspend='sudo systemctl suspend'
 
 # clocks
 alias whattime='date +%l:%M%P'

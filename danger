@@ -3,6 +3,55 @@
 #
 # things that could hurt people
 #
+# this file is sourced *after* the `[[ $- != *i* ]] && return` guard in
+# bashrc, so everything in here exists only in interactive shells. that is
+# the entire point of the file: anything that shadows a real command, or
+# shells out to sudo, lives down here where scripts, cron jobs and coding
+# agents can never trip over it.
+#
+# rule of thumb: if the alias name is also the name of a real binary or a
+# shell builtin, it belongs in this file and not in `aliases`.
+#
+# dependencies
+#   cat_or_ls
+#   ls_or_cat
+#   cd+
+#   /bin/grep
+#   /bin/tree
+#   /bin/lynx
+#   /bin/info
+#   [must be a systemctl flavor of linux]
+#
+######
 
 alias timer='time'
 alias time='date +%l:%M%P'
+
+# i mix these up all the time ok?...
+#alias cd='cd_or_vim'
+#alias vim='vim_or_cd'
+alias cd='cd+'
+alias cat='cat_or_ls'
+alias ls='ls_or_cat'
+
+# defaults, but better. each of these shadows the real binary:
+# -i hangs forever with nothing to answer it, and the filtering ones lie by
+# omission, which is worse
+alias info='info --vi-keys'
+alias lynx='lynx --session ~/.lynxsession'
+alias grep='grep --exclude-dir="**/.git" --exclude-dir="**/node_modules"'
+alias cp='cp -i'
+alias mv='mv -i'
+alias tree="tree -C -I 'node_modules|.git'"
+
+# sudo. a shell with no tty has nowhere to type a password, and three misses
+# trips pam_faillock into rejecting the *correct* password for ten minutes.
+# these are the ones that actually locked me out, twice
+alias visudo='sudo visudo'
+#alias mount='sudo mount'
+alias umount='sudo umount'
+
+# power
+alias shutdown='sudo systemctl poweroff' #*technically* dangerous; overrides shutdown
+alias restart='sudo systemctl reboot'
+alias suspend='sudo systemctl suspend' #overrides the bash builtin
