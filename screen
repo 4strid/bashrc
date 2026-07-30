@@ -1,0 +1,92 @@
+#
+# bashrc/screen
+#
+# the screen dance: over ssh, we always want to be in screen
+#
+# coming in   ssh lands you in the session, yanking it off whatever
+#             terminal had it before. no session yet? one is made.
+# going out   exiting the shell detaches instead of tearing down, so
+#             the next login picks up mid-sentence.
+#
+# this lived in ~/.bash_profile and ~/.bash_logout. the login half is
+# called at the bottom of bashrc; the logout half has to be called from
+# ~/.bash_logout, since that path is bash's and bash's alone:
+#
+#   # ~/.bash_logout
+#   command -v screen_dance_out >/dev/null && screen_dance_out
+#
+# dependencies
+#   /bin/screen
+#
+######
+
+# which session are we dancing with
+SCREEN_SESSION=${SCREEN_SESSION:-ai}
+
+
+# in_screen ()
+#
+# are we inside a screen session? screen sets $STY for its children.
+
+in_screen () {
+  [[ $STY ]]
+}
+
+
+# over_ssh ()
+#
+# did we arrive over the wire? this is the whole reason for the dance --
+# locally the terminal already persists, it's the ssh link that doesn't.
+
+over_ssh () {
+  [[ $SSH_TTY ]]
+}
+
+
+# screen_dance_in ()
+#
+# attach on login. -D -R is the greedy form: detach it from wherever it
+# is, reattach it here, create it if it never existed.
+#
+# the login_shell test keeps the dance to the shell ssh actually handed
+# us. without it, any bash you start after detaching would grab the
+# session straight back, and you could never get to a bare prompt.
+#
+# declining returns 0 on purpose: this is the last word in bashrc, and
+# `ok` in PS1 reports whatever it finds in $? -- sitting down at the
+# local console is not an error and shouldn't greet you with one.
+#
+# dependencies
+#   in_screen
+#   over_ssh
+#   /bin/screen
+#
+# claude, for 4strid (Astrid Ivy)
+# 2026-07-30
+
+screen_dance_in () {
+  in_screen && return 0
+  over_ssh || return 0
+  shopt -q login_shell || return 0
+  screen -D -R "$SCREEN_SESSION"
+}
+
+
+# screen_dance_out ()
+#
+# detach on logout, so the session outlives the connection. call it from
+# ~/.bash_logout (see the header). returns true always -- it is the last
+# word in a logout file and has no business coloring the exit status.
+#
+# dependencies
+#   in_screen
+#   /bin/screen
+#
+# claude, for 4strid (Astrid Ivy)
+# 2026-07-30
+
+screen_dance_out () {
+  in_screen || return 0
+  screen -X detach
+  return 0
+}

@@ -6,6 +6,12 @@
 
 Source `bashrc` in your .bashrc file.
 
+The screen dance in `screen` — over ssh, always be in screen — attaches on
+its own, but the logout half needs a hook, because `~/.bash_logout` is a
+path only bash reads. Put this in yours:
+
+    command -v screen_dance_out >/dev/null && screen_dance_out
+
 ### These scripts are Evil
 
 My configuration changes a lot of default shell behavior including the
