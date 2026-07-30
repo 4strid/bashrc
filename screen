@@ -14,6 +14,7 @@
 #
 #   # ~/.bash_logout
 #   command -v screen_dance_out >/dev/null && screen_dance_out
+#   exit 0
 #
 # dependencies
 #   /bin/screen
