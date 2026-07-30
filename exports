@@ -17,6 +17,14 @@ export RM='rm'
 [[ -f /usr/lib/libstderred.so ]] &&
   export LD_PRELOAD=`setadd $LD_PRELOAD /usr/lib/libstderred.so`
 
+# the little daemon that remembers my ssh passphrase. socket activated,
+# so systemd starts it the first time anything reaches for the socket
+#   systemctl --user enable --now ssh-agent.socket
+# how *long* it remembers is up to AddKeysToAgent in ~/.ssh/config
+# (don't stomp on an agent we inherited, e.g. one forwarded over ssh)
+[[ $XDG_RUNTIME_DIR ]] &&
+  export SSH_AUTH_SOCK=${SSH_AUTH_SOCK:-$XDG_RUNTIME_DIR/ssh-agent.socket}
+
 red=$'\e[1;31m'
 pink=$'\e[1;35m'
 purple=$'\e[0;34m'
