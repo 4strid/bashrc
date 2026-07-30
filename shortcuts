@@ -5,7 +5,11 @@
 #
 # dependencies
 #   tryhard
+#   inscreen
+#   screenvim
 #   ~/bin/google
+#   /bin/screen
+#   ~/.npm/packages/bin/claude
 #
 #######
 
@@ -14,8 +18,11 @@ alias t='tryhard -g'
 alias T='tryhard -G -r'
 alias t!='tryhard -g `lastcmd`'
 alias T!='tryhard -G -r `lastcmd`'
-alias v='tryhard -g vim'
+# vim, but in a screen named after whatever it's editing, one per file
+alias v='tryhard -g screenvim'
 alias V='tryhard -G -r vim'
+# and one screen named "claude" to rule them all
+alias c='inscreen claude claude'
 alias n='npm run'
 alias :q='exit'
 alias :e='v'

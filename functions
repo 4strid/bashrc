@@ -710,6 +710,119 @@ setappend () {
   fi
 }
 
+# _screen_exists ()
+#
+# is anybody home?
+#
+# Returns 0 if there is a screen session named exactly NAME.
+# `screen -ls' lists sessions one per line, tab indented, as "PID.NAME"
+# (and its own matching is fuzzy, hence doing it by hand)
+#
+# Usage: _screen_exists NAME
+#
+# dependencies
+#   /bin/screen
+#   /bin/awk
+#
+# 4strid (Astrid Ivy)
+# 2026-07-30
+
+_screen_exists () {
+  screen -ls 2>/dev/null | awk -F'\t' -v NAME="$1" '
+    /^\t/ {
+      gsub(/[ \t]+$/, "", $2)
+      DOT = index($2, ".")
+      # the PID never has a dot in it, so the first one is the separator
+      if (DOT && substr($2, DOT + 1) == NAME) {
+        FOUND = 1
+      }
+    }
+    END { exit !FOUND }
+  '
+}
+
+# inscreen ()
+#
+# a screen of one's own
+#
+# Attaches to the screen session named SESSION, starting one that runs
+# CMD if there isn't one yet. Steals the session away from any other
+# terminal that happens to be holding onto it ("attach here and now")
+#
+# Session names are really socket filenames, so slashes get swapped out
+# for colons on the way in
+#
+# Just runs CMD right here if screen isn't installed, or if we're already
+# sitting in one (screens inside screens: no thank you)
+#
+# Usage: inscreen SESSION CMD [ARGS...]
+#
+# dependencies
+#   scold
+#   _screen_exists
+#   /bin/screen
+#
+# 4strid (Astrid Ivy)
+# 2026-07-30
+
+inscreen () {
+  local SESSION="${1//\//:}"
+  shift
+
+  command -v screen >/dev/null 2>&1 || {
+    scold "inscreen: no screen installed; running \`$1' the old fashioned way"
+    "$@"
+    return $?
+  }
+
+  [[ $STY ]] && {
+    scold "inscreen: already in a screen; running \`$1' right here"
+    "$@"
+    return $?
+  }
+
+  if _screen_exists "$SESSION"; then
+    screen -D -r "$SESSION"
+  else
+    screen -S "$SESSION" "$@"
+  fi
+}
+
+# screenvim ()
+#
+# a vim of one's own
+#
+# One screen session per set of files, so `v' always picks up where it
+# left off instead of opening the same file twice
+#
+# Filenames are canonicalized before going into the session name, so that
+# ./index.js and ~/src/thing/index.js are the same vim and not two of them
+#
+# Usage: screenvim [FILES...]
+#        (though really: see `v' in bashrc/shortcuts)
+#
+# dependencies
+#   inscreen
+#   /bin/realpath
+#   /bin/vim
+#
+# 4strid (Astrid Ivy)
+# 2026-07-30
+
+screenvim () {
+  local -a FULL
+  local FILE
+  # bare `v' gets one plain old screen named "vim"
+  local SESSION="vim"
+
+  for FILE in "$@" ; do
+    FULL+=("$(realpath -m "$FILE" 2>/dev/null || echo "$FILE")")
+  done
+  (( $# )) && SESSION="vim ${FULL[*]}"
+
+  inscreen "$SESSION" vim "$@"
+}
+
 #
 # screenshot
 #
