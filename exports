@@ -20,6 +20,11 @@ export RM='rm'
 [[ -f /usr/lib/libstderred.so ]] &&
   export LD_PRELOAD=`setadd $LD_PRELOAD /usr/lib/libstderred.so`
 
+# Stop Claude Code asking the terminal to report mouse events. Without this it
+# emits ESC[?1000h + ESC[?1006h at startup and every click/wheel/drag comes back
+# as escape-sequence garbage in the prompt.
+export CLAUDE_CODE_DISABLE_MOUSE=1
+
 # the little daemon that remembers my ssh passphrase. socket activated,
 # so systemd starts it the first time anything reaches for the socket
 #   systemctl --user enable --now ssh-agent.socket

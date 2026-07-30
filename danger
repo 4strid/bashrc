@@ -27,6 +27,11 @@
 alias timer='time'
 alias time='date +%l:%M%P'
 
+# rm -rf, shouted. ($RM in exports stays plain rm -- the functions use the
+# variable, this is just for hands.) shadows nothing, but it belongs down
+# here with the other things that could hurt people
+alias RM='rm -rf'
+
 # i mix these up all the time ok?...
 #alias cd='cd_or_vim'
 #alias vim='vim_or_cd'
