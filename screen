@@ -5,7 +5,9 @@
 #
 # the dance    over ssh, we always want to be in screen
 # the little   v, c and g each get a screen of their own -- or, when the
-#  guys        dance already has us in one, a window of their own
+#  guys        dance already has us in one, a window of their own. v is
+#              one per file, c is one per working directory, g is one
+#              per search
 #
 # coming in   ssh lands you in the session, yanking it off whatever
 #             terminal had it before. no session yet? one is made.
@@ -237,4 +239,40 @@ screenvim () {
   (( $# )) && NAME="vim ${FULL[*]}"
 
   inscreen "$NAME" vim "$@"
+}
+
+# screenclaude ()
+#
+# a claude of one's own
+#
+# One per working directory, the same bargain `v' strikes with files.
+# `c' used to be one session named "claude" for the whole machine, so
+# typing it in a second repo didn't start a second claude -- it yanked
+# you into the first one's conversation, still sitting in the other
+# directory. Which is exactly the sort of thing you find out afterwards.
+#
+# The directory is canonicalized, so ~/src/thing and a symlink pointing
+# at it are the same claude and not two of them, and $HOME collapses back
+# to ~ afterwards to keep the name down to something you can read in a
+# window list.
+#
+# Arguments deliberately stay out of the name: `c' and `c --resume' in
+# the same directory are the same claude. It's the cwd that decides.
+#
+# Usage: screenclaude [ARGS...]
+#        (though really: see `c' in bashrc/shortcuts)
+#
+# dependencies
+#   inscreen
+#   /bin/realpath
+#   ~/.npm/packages/bin/claude
+#
+# claude, for 4strid (Astrid Ivy)
+# 2026-07-31
+
+screenclaude () {
+  local DIR
+  DIR="$(realpath -m "$PWD" 2>/dev/null || echo "$PWD")"
+
+  inscreen "claude ${DIR/#"$HOME"/'~'}" claude "$@"
 }

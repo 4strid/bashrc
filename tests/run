@@ -23,7 +23,9 @@
 #   bashrc/danger
 #   bashrc/aliases
 #   bashrc/shortcuts
+#   bashrc/screen
 #   /bin/mktemp
+#   /bin/python3   (one AF_UNIX socket, to have something real for -S to find)
 #
 # claude, for 4strid (Astrid Ivy)
 # 2026-07-31
@@ -126,6 +128,11 @@ check "-g finds a file" "report" "$(tryhard -g echo report 2>/dev/null)"
 check "-d finds the directory instead" "./report dir" "$(tryhard -d -g echo report 2>/dev/null)"
 check "-d refuses a plain file" "no dir here" \
   "$(tryhard -d -g echo 'no dir here' 2>/dev/null)"
+# the mirror of -d, and what `v' leans on: a half-typed name must not land on
+# a directory that merely starts the same way. unfound, it falls through
+# untouched, so vim gets what you actually typed
+check "-f refuses a directory" "docs" "$(tryhard -f -G echo docs 2>/dev/null)"
+check "-f still finds a file" "report" "$(tryhard -f -g echo report 2>/dev/null)"
 check "-G matches a substring with a space" "./my docs" \
   "$(tryhard -G echo docs 2>/dev/null)"
 check "-r recurses into a spacey directory" "./my docs/deep nest" \
@@ -169,6 +176,86 @@ check "cd lists the directory it landed in" "deep nest" \
   "$(INT "cd '$S/my docs'")"
 check "and still lands there" "$S/my docs" \
   "$(INT "cd '$S/my docs' >/dev/null; echo \$PWD")"
+
+# ------------------------------------------------------------------- exports
+
+# what a child process inherits, and what it must not. every failure in this
+# section is a silent one: a colour that's empty, a prompt that only breaks in
+# somebody else's shell, a socket variable that points at a dead agent and so
+# blames your ssh key for a stale environment
+section "exports"
+
+EXP () { # EXP BODY [ENV...] -- fresh shell, repo loaded, env per ENV
+  local BODY="$1"
+  shift
+  env "$@" bash --norc --noprofile -c "
+    source '$REPO/functions' >/dev/null 2>&1
+    source '$REPO/exports'   >/dev/null 2>&1
+    $BODY
+  " 2>/dev/null
+}
+
+# a real AF_UNIX socket to stand in for the agent. bind() creates the file and
+# it outlives the python that made it, which is all -S needs
+mksock () { python3 -c 'import socket,sys
+socket.socket(socket.AF_UNIX).bind(sys.argv[1])' "$1" ; }
+mksock "$S/ssh-agent.socket"
+mksock "$S/forwarded.socket"
+
+check "no agent in the env: take the systemd one" "$S/ssh-agent.socket" \
+  "$(EXP 'echo "$SSH_AUTH_SOCK"' -u SSH_AUTH_SOCK XDG_RUNTIME_DIR="$S")"
+check "a dead socket is replaced, not believed" "$S/ssh-agent.socket" \
+  "$(EXP 'echo "$SSH_AUTH_SOCK"' SSH_AUTH_SOCK="$S/hungup.socket" XDG_RUNTIME_DIR="$S")"
+check "a live forwarded agent is left alone" "$S/forwarded.socket" \
+  "$(EXP 'echo "$SSH_AUTH_SOCK"' SSH_AUTH_SOCK="$S/forwarded.socket" XDG_RUNTIME_DIR="$S")"
+check "nothing to point at, nothing invented" "" \
+  "$(EXP 'echo "$SSH_AUTH_SOCK"' -u SSH_AUTH_SOCK -u XDG_RUNTIME_DIR)"
+
+# PS1 names five things this repo defines. exported, it outlives all of them:
+# a child shell renders `command not found' and then hands `time' to the bash
+# keyword, which times the prompt and prints real/user/sys into it
+# grep -c prints its 0 and *exits 1* about it; the count is the answer either way
+check "PS1 is not exported" "0" "$(EXP 'env | grep -c "^PS1="')"
+check "a non-interactive shell gets one anyway (iv/os)" "yes" \
+  "$(EXP '[[ $PS1 ]] && echo yes')"
+check "so does an interactive one" "yes" \
+  "$(INT '[[ $PS1 ]] && echo yes')"
+# the export is what leaked it; sourcing bashrc is how you're meant to get it
+check "a shell that never sourced us has no prompt of ours" "" \
+  "$(EXP 'bash --norc --noprofile -c "echo \$PS1"')"
+
+check "every colour has a value" "" \
+  "$(EXP 'for V in C_RED C_PINK C_LIGHT C_BLUE C_STYLE C_GREEN C_RESET ; do
+            [[ ${!V} ]] || printf "%s " "$V"
+          done')"
+
+check "~/bin goes ahead of the system" "$S/bin" "$(EXP 'echo "${PATH%%:*}"')"
+
+# ------------------------------------------------------------ the little guys
+
+# v and c are both "one screen per thing" -- v one per file, c one per working
+# directory. the entire mechanism is the name they hand inscreen, so that name
+# is what's worth pinning: get it wrong and you don't get an error, you get
+# somebody else's session
+section "the little guys"
+
+source "$REPO/screen"
+inscreen () { printf '%s' "$1" ; }   # the name is the whole story
+
+check "c names the screen after the directory" "claude ~/my docs" \
+  "$(builtin cd "$S/my docs"; screenclaude)"
+check "arguments don't get a claude of their own" "claude ~/my docs" \
+  "$(builtin cd "$S/my docs"; screenclaude --resume)"
+check "a different directory is a different claude" "claude ~/plain" \
+  "$(builtin cd "$S/plain"; screenclaude)"
+check "v still names the screen after the file" "vim $S/report" \
+  "$(builtin cd "$S"; screenvim report)"
+check "v asks tryhard for files only" "alias v='tryhard -f -g screenvim'" \
+  "$(bash --norc --noprofile -c '
+      source "$1" >/dev/null 2>&1
+      source "$2" >/dev/null 2>&1
+      alias v
+    ' _ "$REPO/functions" "$REPO/shortcuts")"
 
 # ---------------------------------------------------------------- the guard
 

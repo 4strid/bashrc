@@ -51,9 +51,21 @@ only, `danger` (below) holds everything that overrides a real command. Moving
 a definition between those two files changes who it applies to — that is the
 entire mechanism.
 
-(A consequence worth knowing: `PS1` is built in `exports`, above the guard, but
-interpolates `` `time` `` — which is only aliased in `danger`, below it. That
-works solely because a prompt is never rendered non-interactively.)
+(A consequence worth knowing: `PS1` is built in `exports`, above the guard —
+deliberately, for *every* shell, because iv/os wants one where nobody is
+looking — but it interpolates `` `time` ``, which is only aliased in `danger`,
+below it. That works solely because a prompt is never *rendered* in a shell
+that skipped `danger`. Built there, yes; drawn there, no.)
+
+**Which is why `PS1` is not exported.** Every name in it — `ok`, `whatbranch`,
+`batcolor`, `inception`, `` `time` `` — belongs to this repo, and an exported
+string outlives all of them. A process that inherits the string without
+inheriting the functions renders `command not found` twice and then hands
+`time` to the bash *keyword*, which times the prompt and prints `real/user/sys`
+into the middle of it. The usual victim is `bash --norc -i` — the exact command
+this file tells you to test with. Anything that sources `bashrc` builds its own
+copy and needs no export, so **don't add one back** without a reason that
+survives that paragraph.
 
 ### Never let a bare `sudo` run non-interactively
 
@@ -105,6 +117,39 @@ That means Claude Code is *not* a valid place to test whether the guard works �
 it strips three of the interesting names by itself. Use `bash -lc` for that; it
 gets whatever `aliases` actually defines, with no harness in the way.
 
+### an agent's environment is as old as its process
+
+An agent's shell inherits its environment from the agent process, captured when
+that process started. Anything *exported* from this repo since then is simply
+not there — and `sob` doesn't reach it either, because `sob` re-sources into the
+shell you typed it in, not into some other process's copy.
+
+So a long-running session can be missing an export that the file plainly
+defines, which reads like the machine isn't set up. It isn't a config bug and
+there is nothing to fix. **Before concluding something isn't configured, check
+`bash -lc 'echo $THE_VAR'`** — that gets a fresh read of `exports` as it exists
+on disk right now. If it's set there and empty in your shell, your shell is
+stale; carry the value on the command that needs it and move on.
+
+This bites `SSH_AUTH_SOCK` (`exports`, and see `~/.ssh/config`) hardest, because
+the symptom is `git push` failing with *"make sure you have the correct access
+rights"* — which reads like a missing key rather than a missing variable.
+
+That one error covers two unrelated causes, and guessing between them wastes
+the time. **`ssh-add -l` tells them apart, so run it first:**
+
+| `ssh-add -l` says | what's wrong | fix |
+|---|---|---|
+| *"Could not open a connection"* | your shell has no `SSH_AUTH_SOCK` — stale env, see above | `SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/ssh-agent.socket git push` |
+| *"The agent has no identities"* | agent is fine, the key aged out — `~/.ssh/config` sets `AddKeysToAgent 24h` | a human runs `ssh-add`; nothing else can |
+| lists a key | neither; look elsewhere | — |
+
+The second one is not fixable from an agent shell and no amount of retrying
+changes it: adding a key needs the passphrase, which needs a human at a
+terminal. Say so and hand it over rather than burning turns on it. A session
+that runs longer than a day will watch a working push start failing halfway
+through for exactly this reason, with nothing having changed.
+
 ### Tests
 
     tests/run                  sanity suite; exits 0 or 1
@@ -113,7 +158,8 @@ gets whatever `aliases` actually defines, with no harness in the way.
 `tests/run` is hermetic — it points `$HOME` at a scratch directory with its
 own `.tryhardrc`, so it passes the same way on any machine and touches
 nothing of yours. It covers `cd+`, `tryhard`, `tryfind`, the interactive-only
-behavior, and the guard invariant below.
+behavior, the screen names the little guys hand out, and the guard invariant
+below.
 
 `tests/differential` is the more interesting one, because most of what this
 repo does was never written down — it lives in Astrid's fingers. It replays
@@ -121,6 +167,13 @@ the same pile of `t`/`v`/`T`/`reflekt`-shaped invocations against an old
 `functions` and the current one and diffs the transcripts. Identical output
 means your refactor moved nothing. Reach for it whenever you touch `tryhard`,
 which everything else is built on.
+
+**But read "identical" narrowly.** It sources `functions` and `exports` and
+drives `tryhard` directly — it never sources `shortcuts`, so no alias is ever
+expanded in it. Change what `v` or `t` *passes* to `tryhard` and the
+differential still says identical, because as far as it is concerned nothing
+happened. It answers one question only: did `functions` change behavior. An
+alias change needs a check in `tests/run` instead.
 
 **Run these on demand, not by reflex.** Touching `functions` — especially
 `tryhard` or `cd+` — is worth a run. So is anything structural, or moving a
@@ -140,6 +193,26 @@ which is what `tests/run` does.
 **Never pipe `source` into anything.** `source x | grep -v noise` runs the
 whole file in a subshell and throws away every definition it made, so the
 test that follows silently exercises the old code. Redirect, or filter after.
+
+### One screen per thing
+
+`g`, `v` and `c` all resolve, eventually, to `inscreen NAME CMD` in `screen` —
+the shortcut in `shortcuts` is only ever the front door. Each one is **one
+screen per thing**, and the *thing* is whatever makes two invocations
+different enough to want separate sessions: `g` per search, `v` per file, `c`
+per working directory.
+
+That distinction lives entirely in the `NAME` handed to `inscreen`, so getting
+it wrong doesn't error — it silently hands you a session you didn't want.
+A name too *broad* is the dangerous direction: `c` was a single session named
+`claude` for the whole machine until 2026-07-31, so running it in a second repo
+didn't start a second claude, it yanked you into the first one's conversation.
+
+If you add another of these, name it after what distinguishes it, canonicalize
+any path that goes into the name (so a symlink and the long way round are one
+screen, not two), and leave *arguments* out unless they're the thing itself.
+`tests/run`'s "the little guys" section pins those names — stub `inscreen` and
+check the name, which is the whole mechanism.
 
 ### Spaces in filenames
 
@@ -189,7 +262,7 @@ Prefer either over the bare command.
 | `reflekt` | self-editing helpers — `sob`, and `_reflect_edit` to jump into a section |
 | `shopts` | every `shopt` with a verdict beside it; interactive-only |
 | `danger` | "things that could hurt people" — every override of a real command, and every `sudo`. below the guard, so humans only |
-| `screen` | the screen dance — attach on ssh login, detach on logout |
+| `screen` | the screen dance (attach on ssh login, detach on logout), and the little guys — `inscreen`, `screenify`, `screenvim`, `screenclaude` |
 | `tests/` | `run` (sanity suite) and `differential` (this copy vs a git ref). on demand only — see above |
 | `.bashvimrc` | vim settings for editing these |
 
