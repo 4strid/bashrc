@@ -51,9 +51,21 @@ only, `danger` (below) holds everything that overrides a real command. Moving
 a definition between those two files changes who it applies to — that is the
 entire mechanism.
 
-(A consequence worth knowing: `PS1` is built in `exports`, above the guard, but
-interpolates `` `time` `` — which is only aliased in `danger`, below it. That
-works solely because a prompt is never rendered non-interactively.)
+(A consequence worth knowing: `PS1` is built in `exports`, above the guard —
+deliberately, for *every* shell, because iv/os wants one where nobody is
+looking — but it interpolates `` `time` ``, which is only aliased in `danger`,
+below it. That works solely because a prompt is never *rendered* in a shell
+that skipped `danger`. Built there, yes; drawn there, no.)
+
+**Which is why `PS1` is not exported.** Every name in it — `ok`, `whatbranch`,
+`batcolor`, `inception`, `` `time` `` — belongs to this repo, and an exported
+string outlives all of them. A process that inherits the string without
+inheriting the functions renders `command not found` twice and then hands
+`time` to the bash *keyword*, which times the prompt and prints `real/user/sys`
+into the middle of it. The usual victim is `bash --norc -i` — the exact command
+this file tells you to test with. Anything that sources `bashrc` builds its own
+copy and needs no export, so **don't add one back** without a reason that
+survives that paragraph.
 
 ### Never let a bare `sudo` run non-interactively
 

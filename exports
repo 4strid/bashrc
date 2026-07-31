@@ -6,10 +6,10 @@
 #
 ######
 
-export PATH=`setadd $HOME/bin $HOME/.npm/packages/bin $PATH`
+export PATH=`setadd "$HOME/bin" "$HOME/.npm/packages/bin" "$PATH"`
 # so ~/eslint.config.js (and anything else outside a project) can
 # require globally-installed modules
-export NODE_PATH=`setadd $HOME/.npm/packages/lib/node_modules $NODE_PATH`
+export NODE_PATH=`setadd "$HOME/.npm/packages/lib/node_modules" "$NODE_PATH"`
 export LS='ls --color=auto --hide="lost+found"'
 export CD='cd'
 export CAT='cat'
@@ -18,7 +18,7 @@ export CP='cp'
 export RM='rm'
 # red stderr >:)
 [[ -f /usr/lib/libstderred.so ]] &&
-  export LD_PRELOAD=`setadd $LD_PRELOAD /usr/lib/libstderred.so`
+  export LD_PRELOAD=`setadd "$LD_PRELOAD" /usr/lib/libstderred.so`
 
 # Stop Claude Code asking the terminal to report mouse events. Without this it
 # emits ESC[?1000h + ESC[?1006h at startup and every click/wheel/drag comes back
@@ -29,9 +29,15 @@ export CLAUDE_CODE_DISABLE_MOUSE=1
 # so systemd starts it the first time anything reaches for the socket
 #   systemctl --user enable --now ssh-agent.socket
 # how *long* it remembers is up to AddKeysToAgent in ~/.ssh/config
-# (don't stomp on an agent we inherited, e.g. one forwarded over ssh)
-[[ $XDG_RUNTIME_DIR ]] &&
-  export SSH_AUTH_SOCK=${SSH_AUTH_SOCK:-$XDG_RUNTIME_DIR/ssh-agent.socket}
+#
+# an inherited value wins only while it's still a live socket. a forwarded
+# agent from an ssh session is worth keeping; the dead path left behind by
+# one that hung up is not, and believing it makes every push fail with
+# "make sure you have the correct access rights" -- which reads like your
+# key is gone rather than like a stale variable. -S tells the two apart.
+if [[ ! -S $SSH_AUTH_SOCK && -S $XDG_RUNTIME_DIR/ssh-agent.socket ]]; then
+  export SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/ssh-agent.socket
+fi
 
 red=$'\e[1;31m'
 pink=$'\e[1;35m'
@@ -43,7 +49,10 @@ reset=$'\e[0m'
 export C_RED=$red
 export C_PINK=$pink
 export C_LIGHT=$light
-export C_BLUE=$blue
+# 0;34 is "blue" to everyone but this terminal, where the palette bends it
+# purple. same escape either way -- C_BLUE spent years empty pointing at a
+# $blue that was never defined
+export C_BLUE=$purple
 export C_STYLE=$purple
 export C_GREEN=$green
 export C_RESET=$reset
@@ -55,4 +64,15 @@ export C_RESET=$reset
 #   inception
 #   [danger/time alias]
 #   /bin/vim
-export PS1=$'\[${red}\]`ok`\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \[${light}\]\w\[${pink}\]]`inception`\[${reset}\]$ '
+#
+# built for every shell, interactive or not -- iv/os wants a prompt where
+# there is nobody to read it, which is daft and is also the requirement.
+#
+# deliberately *not* exported, which is a different question from who it's
+# built for. every name in the string is one of ours and the string outlives
+# them, so a process that inherits it without inheriting the functions renders
+# two `command not found's and then hands `time' to the bash *keyword* -- which
+# times the prompt and prints real/user/sys into the middle of it. that process
+# is usually `bash --norc -i', i.e. exactly what you reach for to test this
+# repo. anything that sources bashrc builds its own copy and needs no export
+PS1=$'\[${red}\]`ok`\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \[${light}\]\w\[${pink}\]]`inception`\[${reset}\]$ '

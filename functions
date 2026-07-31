@@ -622,15 +622,16 @@ whatbranch ()  {
 
 setadd () {
   local SET="$1"
+  local ADD
   shift
   for ADD in "$@" ; do
     if [[ ! $SET ]]; then
       SET="$ADD"
-    elif [[ $SET != *$ADD* ]]; then
+    elif [[ $SET != *"$ADD"* ]]; then
       SET="$SET:$ADD"
     fi
   done
-  echo $SET
+  echo "$SET"
 }
 
 # somewhat misguided first try at setadd

@@ -25,6 +25,7 @@
 #   bashrc/shortcuts
 #   bashrc/screen
 #   /bin/mktemp
+#   /bin/python3   (one AF_UNIX socket, to have something real for -S to find)
 #
 # claude, for 4strid (Astrid Ivy)
 # 2026-07-31
@@ -170,6 +171,60 @@ check "cd lists the directory it landed in" "deep nest" \
   "$(INT "cd '$S/my docs'")"
 check "and still lands there" "$S/my docs" \
   "$(INT "cd '$S/my docs' >/dev/null; echo \$PWD")"
+
+# ------------------------------------------------------------------- exports
+
+# what a child process inherits, and what it must not. every failure in this
+# section is a silent one: a colour that's empty, a prompt that only breaks in
+# somebody else's shell, a socket variable that points at a dead agent and so
+# blames your ssh key for a stale environment
+section "exports"
+
+EXP () { # EXP BODY [ENV...] -- fresh shell, repo loaded, env per ENV
+  local BODY="$1"
+  shift
+  env "$@" bash --norc --noprofile -c "
+    source '$REPO/functions' >/dev/null 2>&1
+    source '$REPO/exports'   >/dev/null 2>&1
+    $BODY
+  " 2>/dev/null
+}
+
+# a real AF_UNIX socket to stand in for the agent. bind() creates the file and
+# it outlives the python that made it, which is all -S needs
+mksock () { python3 -c 'import socket,sys
+socket.socket(socket.AF_UNIX).bind(sys.argv[1])' "$1" ; }
+mksock "$S/ssh-agent.socket"
+mksock "$S/forwarded.socket"
+
+check "no agent in the env: take the systemd one" "$S/ssh-agent.socket" \
+  "$(EXP 'echo "$SSH_AUTH_SOCK"' -u SSH_AUTH_SOCK XDG_RUNTIME_DIR="$S")"
+check "a dead socket is replaced, not believed" "$S/ssh-agent.socket" \
+  "$(EXP 'echo "$SSH_AUTH_SOCK"' SSH_AUTH_SOCK="$S/hungup.socket" XDG_RUNTIME_DIR="$S")"
+check "a live forwarded agent is left alone" "$S/forwarded.socket" \
+  "$(EXP 'echo "$SSH_AUTH_SOCK"' SSH_AUTH_SOCK="$S/forwarded.socket" XDG_RUNTIME_DIR="$S")"
+check "nothing to point at, nothing invented" "" \
+  "$(EXP 'echo "$SSH_AUTH_SOCK"' -u SSH_AUTH_SOCK -u XDG_RUNTIME_DIR)"
+
+# PS1 names five things this repo defines. exported, it outlives all of them:
+# a child shell renders `command not found' and then hands `time' to the bash
+# keyword, which times the prompt and prints real/user/sys into it
+# grep -c prints its 0 and *exits 1* about it; the count is the answer either way
+check "PS1 is not exported" "0" "$(EXP 'env | grep -c "^PS1="')"
+check "a non-interactive shell gets one anyway (iv/os)" "yes" \
+  "$(EXP '[[ $PS1 ]] && echo yes')"
+check "so does an interactive one" "yes" \
+  "$(INT '[[ $PS1 ]] && echo yes')"
+# the export is what leaked it; sourcing bashrc is how you're meant to get it
+check "a shell that never sourced us has no prompt of ours" "" \
+  "$(EXP 'bash --norc --noprofile -c "echo \$PS1"')"
+
+check "every colour has a value" "" \
+  "$(EXP 'for V in C_RED C_PINK C_LIGHT C_BLUE C_STYLE C_GREEN C_RESET ; do
+            [[ ${!V} ]] || printf "%s " "$V"
+          done')"
+
+check "~/bin goes ahead of the system" "$S/bin" "$(EXP 'echo "${PATH%%:*}"')"
 
 # ------------------------------------------------------------ the little guys
 
