@@ -1,0 +1,205 @@
+#!/bin/bash
+#
+# bashrc/tests/run
+#
+# does it still work? (the eternal question)
+#
+# sanity tests for the sharp edges -- the ones that broke silently and stayed
+# broken for years, because nothing here ever gets *run*, it gets *sourced*
+# into a shell you then use for a week before noticing.
+#
+# hermetic on purpose: $HOME is pointed at a scratch directory with its own
+# .tryhardrc, so this passes the same way on any machine and doesn't care
+# what Astrid's actual home looks like today.
+#
+# tests the checkout it lives in, not the installed one. run it from anywhere.
+#
+# Usage: tests/run
+#        returns 0 if everything passed, 1 otherwise
+#
+# dependencies
+#   bashrc/functions
+#   bashrc/exports
+#   bashrc/danger
+#   bashrc/aliases
+#   bashrc/shortcuts
+#   /bin/mktemp
+#
+# claude, for 4strid (Astrid Ivy)
+# 2026-07-31
+
+REPO=$(dirname $(dirname $(realpath ${BASH_SOURCE[0]})))
+
+PASS=0
+FAIL=0
+
+check () { # DESCRIPTION EXPECTED ACTUAL
+  if [[ "$2" == "$3" ]]; then
+    PASS=$((PASS + 1))
+  else
+    FAIL=$((FAIL + 1))
+    echo "  FAIL $1"
+    echo "        want [$2]"
+    echo "        got  [$3]"
+    return 1
+  fi
+}
+
+section () {
+  echo
+  echo "== $1 =="
+}
+
+# ---------------------------------------------------------------- the scratch
+
+SANDBOX=$(mktemp -d)
+trap '/bin/rm -rf "$SANDBOX"' EXIT
+
+mkdir -p "$SANDBOX/my docs/deep nest" "$SANDBOX/plain" "$SANDBOX/report dir"
+touch "$SANDBOX/report"
+# a file and a directory with the same prefix, which is the whole -d problem
+cat > "$SANDBOX/.tryhardrc" <<'EOF'
+_TRY_COMMON=("." ".." "$HOME" "/")
+EOF
+
+export HOME="$SANDBOX"
+
+source "$REPO/functions"
+source "$REPO/exports"
+
+S="$SANDBOX"
+
+# ------------------------------------------------------------------- syntax
+
+section "syntax"
+for f in bashrc functions exports aliases shortcuts reflekt shopts danger screen ; do
+  check "bash -n $f" "" "$(bash -n "$REPO/$f" 2>&1)"
+done
+
+# ---------------------------------------------------------------------- cd+
+
+section "cd+"
+
+builtin cd "$S"; cd+ "$S/my docs" >/dev/null 2>&1
+check "absolute path with a space" "$S/my docs" "$PWD"
+
+builtin cd "$S"; cd+ "my docs" >/dev/null 2>&1
+check "relative name with a space" "$S/my docs" "$PWD"
+
+builtin cd "$S"; cd+ "my d" >/dev/null 2>&1
+check "half-remembered name with a space" "$S/my docs" "$PWD"
+
+builtin cd "$S"; cd+ report >/dev/null 2>&1
+check "a directory beats a file of the same name" "$S/report dir" "$PWD"
+
+builtin cd "$S"; cd+ "my docs" "deep nest" >/dev/null 2>&1
+check "two spacey segments in one trip" "$S/my docs/deep nest" "$PWD"
+
+builtin cd "$S"; cd+ "my docs" nope >/dev/null 2>&1; RC=$?
+check "a bad segment rewinds the whole trip" "$S" "$PWD"
+check "a bad segment returns 127" "127" "$RC"
+
+builtin cd "$S"; cd+ >/dev/null 2>&1
+check "no arguments goes home" "$HOME" "$PWD"
+
+builtin cd "$S"; cd+ plain >/dev/null 2>&1
+check "returns 0 on success" "0" "$?"
+
+builtin cd "$S/plain"; cd+ .. >/dev/null 2>&1
+check "cd+ .. still climbs" "$S" "$PWD"
+
+# the two-step history only counts cd+ hops, so take three of them
+builtin cd "$S"; cd+ "my docs" >/dev/null 2>&1
+cd+ "$S/plain" >/dev/null 2>&1
+cd+ -- >/dev/null 2>&1
+check "cd+ -- goes back two" "$S" "$PWD"
+
+builtin cd "$S"
+check "nothing on stdout when not interactive" "" "$(cd+ plain)"
+
+# ------------------------------------------------------------------ tryhard
+
+section "tryhard"
+
+builtin cd "$S"
+check "-g finds a file" "report" "$(tryhard -g echo report 2>/dev/null)"
+check "-d finds the directory instead" "./report dir" "$(tryhard -d -g echo report 2>/dev/null)"
+check "-d refuses a plain file" "no dir here" \
+  "$(tryhard -d -g echo 'no dir here' 2>/dev/null)"
+check "-G matches a substring with a space" "./my docs" \
+  "$(tryhard -G echo docs 2>/dev/null)"
+check "-r recurses into a spacey directory" "./my docs/deep nest" \
+  "$(tryhard -d -r echo 'deep nest' 2>/dev/null)"
+check "a multi-word command keeps its words" "a b ./my docs" \
+  "$(tryhard -d -g echo 'a b' 'my d' 2>/dev/null)"
+check "an exact relative path wins immediately" "plain" \
+  "$(tryhard -d -g echo plain 2>/dev/null)"
+check "unfindable target falls through to the command" "definitely_not_here" \
+  "$(tryhard -d -g echo definitely_not_here 2>/dev/null)"
+
+# deep enough that neither . nor .. can reach it, so $HOME is the one that does
+builtin cd "$S/my docs/deep nest"
+check "reaches \$HOME from elsewhere" "$HOME/plain" \
+  "$(tryhard -d -g echo plain 2>/dev/null | head -1)"
+
+# ------------------------------------------------------------------ tryfind
+
+section "tryfind"
+
+builtin cd "$S"
+check "finds spacey directories" "./my docs" "$(tryfind -d -g 'my d' 2>/dev/null)"
+check "-D takes a base directory with a space" "$S/my docs/deep nest" \
+  "$(builtin cd /; tryfind -d -D "$S/my docs" -g deep 2>/dev/null)"
+
+# -------------------------------------------------------------- interactive
+
+# --norc so this is the repo's behavior and not whatever is installed.
+# see CLAUDE.md: a plain `bash -ic` would have sourced ~/.bashrc first
+section "interactive only"
+
+INT() { # run BODY in an interactive shell with the repo loaded
+  bash --norc --noprofile -ic "
+    source $REPO/functions; source $REPO/exports; source $REPO/danger
+    $1
+  " 2>/dev/null
+}
+
+check "cd is aliased to cd+" "cd+" "$(INT 'alias cd | sed "s/.*=.//;s/.\$//"')"
+check "cd lists the directory it landed in" "deep nest" \
+  "$(INT "cd '$S/my docs'")"
+check "and still lands there" "$S/my docs" \
+  "$(INT "cd '$S/my docs' >/dev/null; echo \$PWD")"
+
+# ---------------------------------------------------------------- the guard
+
+# the invariant from CLAUDE.md: `aliases` and `shortcuts` are sourced above the
+# interactive guard, so nothing in them may shadow a real command or call sudo.
+# break this and agent shells start hanging on prompts nobody can answer
+section "the guard"
+
+NAMES=$(bash --norc --noprofile -c \
+  'source "$1"; source "$2"; compgen -a' _ "$REPO/aliases" "$REPO/shortcuts")
+
+COLLISIONS=
+for N in $NAMES ; do
+  BIN=$(bash --norc --noprofile -c 'type -P "$1"' _ "$N" 2>/dev/null)
+  KIND=$(bash --norc --noprofile -c 'type -t "$1"' _ "$N" 2>/dev/null)
+  [[ $BIN ]] && COLLISIONS+="$N($BIN) "
+  [[ $KIND == builtin || $KIND == keyword ]] && COLLISIONS+="$N($KIND) "
+done
+check "no alias above the guard shadows a real command" "" "$COLLISIONS"
+
+# strip comments first, or the explanation of the rule trips the rule
+SUDO=$(for f in functions exports aliases shortcuts reflekt ; do
+    sed 's/#.*//' "$REPO/$f" | grep -Hn sudo | sed "s|^|$f:|"
+  done)
+check "no sudo above the guard" "" "$SUDO"
+
+# ----------------------------------------------------------------------- fin
+
+echo
+if (( FAIL )); then
+  echo "$PASS passed, $FAIL FAILED"
+  exit 1
+fi
+echo "$PASS passed. we're fine"

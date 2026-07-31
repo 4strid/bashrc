@@ -1,0 +1,83 @@
+#!/bin/bash
+#
+# bashrc/tests/differential
+#
+# "did I change anything I didn't mean to?"
+#
+# tests/run checks the behavior somebody bothered to write down. this checks
+# all the rest of it -- the accumulated habits of `t`, `v`, `T` and `reflekt`
+# that live in Astrid's fingers and nowhere else.
+#
+# it runs the same pile of invocations against an old `functions` and the
+# working copy, in your real environment with your real ~/.tryhardrc, and
+# diffs the transcripts. identical output means whatever you just refactored
+# didn't move anything. a diff means read it carefully -- it might be the
+# change you wanted, it might not.
+#
+# Usage: tests/differential [REF]      (REF defaults to HEAD)
+#        returns 0 if the transcripts match
+#
+# dependencies
+#   bashrc/functions
+#   bashrc/exports
+#   /bin/git
+#   /bin/mktemp
+#   /bin/diff
+#
+# claude, for 4strid (Astrid Ivy)
+# 2026-07-31
+
+REPO=$(dirname $(dirname $(realpath ${BASH_SOURCE[0]})))
+REF=${1:-HEAD}
+
+WORK=$(mktemp -d)
+trap '/bin/rm -rf "$WORK"' EXIT
+
+git -C "$REPO" show "$REF:functions" > "$WORK/old" || {
+  echo "no functions at $REF" 1>&2
+  exit 1
+}
+
+# the probes. everything here must be deterministic and must not write
+# anything -- `echo` stands in for whatever t/v/T would really have run
+probe () {
+  source "$1"
+  source "$REPO/exports"
+
+  run () { echo "### $*"; ( "$@" ) 2>&1; echo "  rc=$?"; }
+
+  builtin cd "$REPO"
+  run tryhard -g echo functi
+  run tryhard -g -v echo functi
+  run tryhard -G echo unction
+  run tryhard -d -g echo tests
+  run tryhard -e -g echo hostn
+  run tryhard -u -g echo bashrc
+  run tryhard -U -g echo bashrc
+  run tryhard -G -r echo shopt
+  run tryhard -m -g echo READ
+  run tryhard -c -g echo bin
+  run tryhard echo definitely_not_here
+  run tryhard -g cat /nonexistent
+  run tryfind -d -g tes
+  run tryfind -g -1 READ
+  run tryfind -d -D "$REPO" -g test
+
+  builtin cd "$HOME"
+  run tryhard -d -g echo bin
+  run tryhard -g -v echo .bashrc
+  run tryhard -d -g -v echo src
+}
+
+probe "$WORK/old"           > "$WORK/before" 2>&1
+probe "$REPO/functions"     > "$WORK/after"  2>&1
+
+if diff -u "$WORK/before" "$WORK/after" > "$WORK/delta" ; then
+  echo "identical to $REF over $(grep -c '^###' "$WORK/before") invocations"
+  exit 0
+fi
+
+echo "changed against $REF:"
+echo
+cat "$WORK/delta"
+exit 1

@@ -105,27 +105,41 @@ That means Claude Code is *not* a valid place to test whether the guard works �
 it strips three of the interesting names by itself. Use `bash -lc` for that; it
 gets whatever `aliases` actually defines, with no harness in the way.
 
-### Testing an edit to these files
+### Tests
 
-There is no test suite, and two ways to think you tested something when you
-did not. Both fail *silently* — you get plausible output from the old code.
+    tests/run                  sanity suite; exits 0 or 1
+    tests/differential [REF]   this working copy vs REF (default HEAD)
 
-**Any `bash -ic` has already sourced the installed `~/.bashrc`,** which sources
-the main checkout — not your branch, not your worktree. Sourcing your copy on
-top redefines what your copy defines, but leaves anything you *deleted* still
-in the shell. To actually test a copy: `unset -f` the functions in question
-first, then source your `bashrc`, then check the deleted ones are gone.
+`tests/run` is hermetic — it points `$HOME` at a scratch directory with its
+own `.tryhardrc`, so it passes the same way on any machine and touches
+nothing of yours. It covers `cd+`, `tryhard`, `tryfind`, the interactive-only
+behavior, and the guard invariant below.
+
+`tests/differential` is the more interesting one, because most of what this
+repo does was never written down — it lives in Astrid's fingers. It replays
+the same pile of `t`/`v`/`T`/`reflekt`-shaped invocations against an old
+`functions` and the current one and diffs the transcripts. Identical output
+means your refactor moved nothing. Reach for it whenever you touch `tryhard`,
+which everything else is built on.
+
+**Run these on demand, not by reflex.** Touching `functions` — especially
+`tryhard` or `cd+` — is worth a run. So is anything structural, or moving a
+definition across the guard. Adding an alias, fixing a comment, editing this
+file: don't bother. There's no watcher and no hook, deliberately.
+
+When you do test by hand, there are two ways to think you tested something
+when you didn't. Both fail *silently*, handing you plausible output from the
+old code:
+
+**Any `bash -ic` has already sourced the installed `~/.bashrc`,** which
+sources the main checkout — not your branch, not your worktree. Sourcing your
+copy on top redefines what your copy defines, but leaves anything you
+*deleted* still in the shell. Use `bash --norc -ic` and source what you mean,
+which is what `tests/run` does.
 
 **Never pipe `source` into anything.** `source x | grep -v noise` runs the
-whole file in a subshell and throws away every definition it made, so the test
-that follows silently exercises the old code. Redirect, or filter afterward.
-
-The useful positive check, in a repo whose behavior is undocumented and mostly
-lives in Astrid's fingers: diff the old against the new. `git show
-HEAD:functions > /tmp/old`, run the same list of invocations against each, and
-`diff` the transcripts. Identical output over the flag combinations that `t`,
-`v`, `T` and `reflekt` actually use is worth more than any assertion you can
-guess at, because it tests the behavior nobody wrote down.
+whole file in a subshell and throws away every definition it made, so the
+test that follows silently exercises the old code. Redirect, or filter after.
 
 ### Spaces in filenames
 
@@ -175,6 +189,8 @@ Prefer either over the bare command.
 | `reflekt` | self-editing helpers — `sob`, and `_reflect_edit` to jump into a section |
 | `shopts` | every `shopt` with a verdict beside it; interactive-only |
 | `danger` | "things that could hurt people" — every override of a real command, and every `sudo`. below the guard, so humans only |
+| `screen` | the screen dance — attach on ssh login, detach on logout |
+| `tests/` | `run` (sanity suite) and `differential` (this copy vs a git ref). on demand only — see above |
 | `.bashvimrc` | vim settings for editing these |
 
 `PATH` puts `~/bin` and `~/.npm/packages/bin` ahead of the system, so npm-global
