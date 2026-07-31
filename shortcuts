@@ -39,9 +39,14 @@ alias ga='git add'
 alias gaa='git add -A'
 alias gm='git commit -m'
 alias gp='git push'
-# every branch that isn't in yet, hauled in at once. it's an octopus merge,
-# so it's all or nothing: if any two of them touched the same lines it
-# refuses and puts you back exactly where you were, nothing half-merged.
+# every branch that isn't in yet, hauled in at once, octopus-style.
+# it only backs out cleanly when it can fast-forward first — i.e. you're
+# standing on a strict ancestor of everything you're taking. one commit of
+# your own that they haven't got, and it does real merges instead: a
+# conflict then leaves you half-merged like any other merge, head #1 staged
+# and head #2's file in pieces. `git merge --abort` walks it back.
+# do NOT `git reset` to escape — that drops MERGE_HEAD and leaves the
+# markers sitting in your files with nothing left to abort.
 # the trailing HEAD is a guard — with no branches left to take, a bare
 # `git merge` would helpfully go merge your upstream instead
 alias gall='git merge --no-ff $(git branch --format="%(refname:short)" --no-merged) HEAD'
