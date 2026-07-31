@@ -49,3 +49,4 @@ alias gp='git push'
 # the trailing HEAD is a guard — with no branches left to take, a bare
 # `git merge` would helpfully go merge your upstream instead
 alias gall='git merge --no-ff $(git branch --format="%(refname:short)" --no-merged) HEAD'
+alias gab='git merge --abort'
