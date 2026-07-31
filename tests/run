@@ -329,14 +329,37 @@ section "the guard"
 NAMES=$(bash --norc --noprofile -c \
   'source "$1"; source "$2"; compgen -a' _ "$REPO/aliases" "$REPO/shortcuts")
 
+# names we shadow knowingly and intend to keep shadowing. the rule is worth
+# keeping absolute *by default* -- it's how we stopped agent shells hanging --
+# but it's a rule about not eating a command somebody meant to run, and if
+# nobody ever meant the other one there's nothing to protect. so: an exception
+# needs a reason written next to it, and it stays listed rather than deleted,
+# because a waiver nobody can see is just a broken test
+declare -A WONTFIX=(
+  [gs]="ghostscript. \`git status' a hundred times a day, postscript never"
+)
+
 COLLISIONS=
+WAIVED=
 for N in $NAMES ; do
   BIN=$(bash --norc --noprofile -c 'type -P "$1"' _ "$N" 2>/dev/null)
   KIND=$(bash --norc --noprofile -c 'type -t "$1"' _ "$N" 2>/dev/null)
+  [[ ! $BIN && $KIND != builtin && $KIND != keyword ]] && continue
+  # only prints when the collision is actually there, so an entry for
+  # something this machine doesn't have installed stays quiet instead of
+  # failing somebody else's run
+  [[ ${WONTFIX[$N]} ]] && {
+    WAIVED+="$N "
+    continue
+  }
   [[ $BIN ]] && COLLISIONS+="$N($BIN) "
   [[ $KIND == builtin || $KIND == keyword ]] && COLLISIONS+="$N($KIND) "
 done
 check "no alias above the guard shadows a real command" "" "$COLLISIONS"
+
+for N in $WAIVED ; do
+  echo "  won't fix: $N shadows $(type -P "$N") -- ${WONTFIX[$N]}"
+done
 
 # strip comments first, or the explanation of the rule trips the rule
 SUDO=$(for f in functions exports aliases shortcuts reflekt ; do

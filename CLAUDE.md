@@ -122,6 +122,17 @@ a real binary or a shell builtin, or the body says `sudo`, it goes in `danger`.
 Both files say so in their headers — keep it that way, or agent shells start
 breaking again in ways nobody will connect back to this repo.
 
+**One name is waived, on purpose: `gs`.** It's `git status` in `shortcuts` and
+it shadows ghostscript. Won't fix — the invariant is there to stop an alias
+eating a command somebody meant to run, and nobody here has ever meant the
+postscript interpreter; `/usr/bin/gs` still reaches it. `tests/run` carries a
+`WONTFIX` map that waives it by name and prints it rather than hiding it, so
+the suite is green and the exception stays visible. **Don't "fix" this by
+moving `gs` to `danger`** — that would take it away from the interactive shell
+that actually types it and give it to nobody. If you add another waiver, the
+reason goes next to the entry; an unexplained one is indistinguishable from
+the bug this rule exists to catch.
+
 ### a filter that isn't this repo's doing
 
 Worth knowing so you don't misread a test: **Claude Code's shell snapshot

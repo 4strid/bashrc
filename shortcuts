@@ -38,6 +38,11 @@ alias :cd='cd'
 
 # git, typed at speed
 alias gl='git log'
+# yes, this shadows ghostscript, and above the guard at that. won't fix: it's
+# `git status' a hundred times a day and a postscript interpreter never. the
+# real one is still there as /usr/bin/gs. tests/run waives it by name, so
+# don't "fix" this by moving it to danger -- that would only hide it from the
+# shell that types it
 alias gs='git status'
 alias ga='git add'
 alias gA='git add -A'
