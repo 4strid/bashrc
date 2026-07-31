@@ -6,8 +6,9 @@ which is `$HOME` itself and holds the dotfiles, `bin/` scripts and machine
 notes.
 
 This repo is **not** symlinked into place by `pc`'s `link.sh`. It is pulled in
-by the `~/lib/bashrc` symlink and the `import` function in `~/.cutestrap`,
-which sources `bashrc` — the entry point that sources everything else.
+by one line at the top of `~/.bashrc` (which *is* symlinked by `link.sh`):
+`source $HOME/src/bashrc/bashrc` — the entry point that sources everything
+else.
 
 `sob` (defined in `reflekt`) re-sources `~/.bashrc`. After editing anything
 here, that is how the change takes effect in an open terminal.
