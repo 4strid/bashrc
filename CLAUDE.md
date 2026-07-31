@@ -113,7 +113,8 @@ gets whatever `aliases` actually defines, with no harness in the way.
 `tests/run` is hermetic — it points `$HOME` at a scratch directory with its
 own `.tryhardrc`, so it passes the same way on any machine and touches
 nothing of yours. It covers `cd+`, `tryhard`, `tryfind`, the interactive-only
-behavior, and the guard invariant below.
+behavior, the screen names the little guys hand out, and the guard invariant
+below.
 
 `tests/differential` is the more interesting one, because most of what this
 repo does was never written down — it lives in Astrid's fingers. It replays
@@ -140,6 +141,26 @@ which is what `tests/run` does.
 **Never pipe `source` into anything.** `source x | grep -v noise` runs the
 whole file in a subshell and throws away every definition it made, so the
 test that follows silently exercises the old code. Redirect, or filter after.
+
+### One screen per thing
+
+`g`, `v` and `c` all resolve, eventually, to `inscreen NAME CMD` in `screen` —
+the shortcut in `shortcuts` is only ever the front door. Each one is **one
+screen per thing**, and the *thing* is whatever makes two invocations
+different enough to want separate sessions: `g` per search, `v` per file, `c`
+per working directory.
+
+That distinction lives entirely in the `NAME` handed to `inscreen`, so getting
+it wrong doesn't error — it silently hands you a session you didn't want.
+A name too *broad* is the dangerous direction: `c` was a single session named
+`claude` for the whole machine until 2026-07-31, so running it in a second repo
+didn't start a second claude, it yanked you into the first one's conversation.
+
+If you add another of these, name it after what distinguishes it, canonicalize
+any path that goes into the name (so a symlink and the long way round are one
+screen, not two), and leave *arguments* out unless they're the thing itself.
+`tests/run`'s "the little guys" section pins those names — stub `inscreen` and
+check the name, which is the whole mechanism.
 
 ### Spaces in filenames
 
@@ -189,7 +210,7 @@ Prefer either over the bare command.
 | `reflekt` | self-editing helpers — `sob`, and `_reflect_edit` to jump into a section |
 | `shopts` | every `shopt` with a verdict beside it; interactive-only |
 | `danger` | "things that could hurt people" — every override of a real command, and every `sudo`. below the guard, so humans only |
-| `screen` | the screen dance — attach on ssh login, detach on logout |
+| `screen` | the screen dance (attach on ssh login, detach on logout), and the little guys — `inscreen`, `screenify`, `screenvim`, `screenclaude` |
 | `tests/` | `run` (sanity suite) and `differential` (this copy vs a git ref). on demand only — see above |
 | `.bashvimrc` | vim settings for editing these |
 

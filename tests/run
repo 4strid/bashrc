@@ -23,6 +23,7 @@
 #   bashrc/danger
 #   bashrc/aliases
 #   bashrc/shortcuts
+#   bashrc/screen
 #   /bin/mktemp
 #
 # claude, for 4strid (Astrid Ivy)
@@ -169,6 +170,26 @@ check "cd lists the directory it landed in" "deep nest" \
   "$(INT "cd '$S/my docs'")"
 check "and still lands there" "$S/my docs" \
   "$(INT "cd '$S/my docs' >/dev/null; echo \$PWD")"
+
+# ------------------------------------------------------------ the little guys
+
+# v and c are both "one screen per thing" -- v one per file, c one per working
+# directory. the entire mechanism is the name they hand inscreen, so that name
+# is what's worth pinning: get it wrong and you don't get an error, you get
+# somebody else's session
+section "the little guys"
+
+source "$REPO/screen"
+inscreen () { printf '%s' "$1" ; }   # the name is the whole story
+
+check "c names the screen after the directory" "claude ~/my docs" \
+  "$(builtin cd "$S/my docs"; screenclaude)"
+check "arguments don't get a claude of their own" "claude ~/my docs" \
+  "$(builtin cd "$S/my docs"; screenclaude --resume)"
+check "a different directory is a different claude" "claude ~/plain" \
+  "$(builtin cd "$S/plain"; screenclaude)"
+check "v still names the screen after the file" "vim $S/report" \
+  "$(builtin cd "$S"; screenvim report)"
 
 # ---------------------------------------------------------------- the guard
 

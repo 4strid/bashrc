@@ -5,9 +5,9 @@
 #
 # dependencies
 #   tryhard
-#   inscreen   [bashrc/screen]
-#   screenify  [bashrc/screen]
-#   screenvim  [bashrc/screen]
+#   screenify    [bashrc/screen]
+#   screenvim    [bashrc/screen]
+#   screenclaude [bashrc/screen]
 #   ~/bin/google
 #   /bin/git
 #   /bin/screen
@@ -25,8 +25,9 @@ alias T!='tryhard -G -r `lastcmd`'
 # vim, but in a screen named after whatever it's editing, one per file
 alias v='tryhard -g screenvim'
 alias V='tryhard -G -r vim'
-# and one screen named "claude" to rule them all
-alias c='inscreen claude claude'
+# claude, in a screen named after the directory it was started in, one
+# per working directory -- same deal as v, for the same reason
+alias c='screenclaude'
 alias n='npm run'
 alias :q='exit'
 alias :e='v'
