@@ -27,8 +27,6 @@ source $BASHRC/screen
 
 attempt is_tty && setfont Tamsyn8x16r
 
-cdmod -p tryhard -g -v -P ls --color=auto
-
 # last, so screen inherits a finished shell. see screen for the other half,
 # which ~/.bash_logout has to call itself
 screen_dance_in

@@ -137,32 +137,51 @@ EOF
 
   [[ ! $TRY ]] && TRY=( "${_TRY_COMMON[@]}" )
 
-  local CMD=${@:1:$#-1}
+  # CMD is an *array*, not a string. as a string it re-split on every space,
+  # which is how a target like "my docs" used to arrive as two arguments
+  local -a CMD=()
+  (( $# > 1 )) && CMD=("${@:1:$#-1}")
   local TARGET="${@:$#}"
   local DONE=
 
   [[ ! $TARGET ]] && {
-    $CMD
+    "${CMD[@]}"
     return $?
   }
 
+  # glob a pattern that may contain spaces. with IFS empty the shell does no
+  # word splitting, but pathname expansion still runs and still hands back one
+  # word per match -- which is the entire trick that makes spaces work here.
+  # unmatched patterns come back untouched, same as before; the -d/-f tests
+  # below throw them out
+  _glob () {
+    local OLDIFS=$IFS
+    IFS=
+    MATCHES=( $@ )
+    IFS=$OLDIFS
+  }
+
   _try () {
-    for T in $@ ; do
-      TT="${TARGET} ${T}/${TARGET}"
+    local T TG
+    local -a PATTERNS MATCHES SUBS
+    for T in "$@" ; do
+      # the target as typed, and the target under $T
+      PATTERNS=("$TARGET" "$T/$TARGET")
       # "//" just kind of bugs me lol
-      [[ $T == "/" ]] && TT="/$TARGET"
-      (( $GLOB == 1 )) && TT="${TT}*"
-      (( $GLOB == 2 )) && TT="${T}/*${TARGET}*"
+      [[ $T == "/" ]] && PATTERNS=("/$TARGET")
+      (( $GLOB == 1 )) && PATTERNS[-1]="${PATTERNS[-1]}*"
+      (( $GLOB == 2 )) && PATTERNS=("$T/*$TARGET*")
       (( $VERBOSE >= 2 )) && {
-        echo "DEBUG T $T" 1>&2 
-        echo "DEBUG TT $TT" 1>&2
+        echo "DEBUG T $T" 1>&2
+        echo "DEBUG PATTERNS ${PATTERNS[*]}" 1>&2
       }
-      for TG in $TT ; do
+      _glob "${PATTERNS[@]}"
+      for TG in "${MATCHES[@]}" ; do
         (( $VERBOSE >= 2 )) && echo "DEBUG TG $TG" 1>&2
         if (( $DIRS )); then
           if [[ -d "$TG" ]]; then
             (( $VERBOSE )) && [[ $TG != $TARGET ]] && echo "$TG" 1>&2
-            $CMD "$TG"
+            "${CMD[@]}" "$TG"
             DONE=$?
             (( $MULTI )) || return $DONE
           fi
@@ -170,7 +189,7 @@ EOF
         if (( $FILES )); then
           if [[ -f "$TG" ]]; then
             (( $VERBOSE )) && [[ $TG != $TARGET ]] && echo "$TG" 1>&2
-            $CMD "$TG"
+            "${CMD[@]}" "$TG"
             DONE=$?
             (( $MULTI )) || return $DONE
           fi
@@ -178,9 +197,11 @@ EOF
       done
       # TODO: breath first instead of depth first search
       if (( $RECURSE )); then
-        local -a SUBS
         if [[ -d $T ]]; then
-          SUBS+=("$T/*/")
+          # expand the subdirectories *here* -- the recursive call takes real
+          # paths now, so it can no longer glob the pattern on our behalf
+          _glob "$T/*/"
+          SUBS=("${MATCHES[@]%/}")
           _try "${SUBS[@]}"
           (( $MULTI )) || {
             [[ $DONE ]] && return $DONE
@@ -194,7 +215,7 @@ EOF
   [[ $DONE ]] && return $DONE
 
   # didn't find it; let CMD print an appropriate error message
-  $CMD "$TARGET";
+  "${CMD[@]}" "$TARGET";
 }
 
 # tryfind ()
@@ -213,7 +234,7 @@ EOF
 
 tryfind () {
   local TYPE=
-  local BASEDIR="-D ."
+  local BASEDIR="."
   local MULTI="-m"
   local RECURSE="-r"
   local GLOB=
@@ -225,7 +246,7 @@ tryfind () {
       f) TYPE="-f" ;;
       d) TYPE="-d" ;;
       a) TYPE="-a" ;;
-      D) BASEDIR="-D $OPTARG";;
+      D) BASEDIR="$OPTARG";;
       1) MULTI="" ;;
       g) GLOB="-g" ;;
       G) GLOB="-G" ;;
@@ -261,7 +282,9 @@ EOF
 
   # lmao we use `sort' just to remove duplicates because I couldn't figure another way out
   # it's *pretty damn silly* that it had the exact functionality i needed though
-  tryhard "$BASEDIR" $FLAGS ls -d -1 "$@" | sed 's/[ \t]*$//' | sort -u
+  # ($FLAGS stays unquoted on purpose -- it's a bag of flags. -D takes its
+  #  directory as its own argument now, so a base dir with a space survives)
+  tryhard -D "$BASEDIR" $FLAGS ls -d -1 "$@" | sed 's/[ \t]*$//' | sort -u
 }
 
 lastcmd () {
@@ -370,24 +393,31 @@ is_tty () {
 #
 # one of those rare, mysterious 800MB CDs you can never find anymore
 #
-# Usage: cd [directories...]
+# Usage: cd+ [directories...]
 # If omitted, goes to home directory
-# Otherwise treats each word as a segment running prefix before attempting each segment. Fails fast, any bad segment will cause it to return to starting PWD.
+# `cd+ --' goes back two, instead of one
+# Otherwise each argument is one segment of the trip, tried in order.
+# Fails fast: any bad segment puts you back where you started.
 #
-# Environment: Relies on $_CD_MOD_PRE and $_CD_MOD_POST variables
-# for configuration. Prefixes cd+ command with PRE variable @-expanded
-# and then runs commands in $_CD_MOD_POST. Commands are separated by --
+# Each segment goes through `tryhard -d', so a half-remembered name still
+# lands (-d because you can't cd into a file, and without it a file that
+# glob-matches first wins and the whole thing falls over).
+#
+# This used to take its prefix and post commands from $_CD_MOD_PRE and
+# $_CD_MOD_POST, built by a whole `cdmod' function, so it could be composed
+# out of anything. In seven years it was only ever configured one way, by one
+# line in bashrc, so that is now just what it does. (RIP cdmod, 2019-2026)
 #
 # dependencies
-#   ...*technically* none, but it's sort of worthless without tryhard in $CD_MOD_PRE
+#   tryhard
+#   $LS
 #
 # 4strid (Astrid Ivy)
 # 2019-02-15
 
 cd+ () {
   local -a DEST
-  local -a PRE
-  local -a POST
+  local SEG
   local FAILED=0
   local START="$PWD"
   local PREV="$OLDPWD"
@@ -401,120 +431,33 @@ cd+ () {
   else
     DEST=("$HOME")
   fi
-  [[ _CD_MOD_PRE ]] && PRE+=(${_CD_MOD_PRE[@]})
-  [[ _CD_MOD_POST ]] && POST+=(${_CD_MOD_POST[@]})
 
-  # run prefix on each segment of path
-  for SEG in ${DEST[@]} ; do
+  # quoted, so "my documents" is one destination and not two
+  for SEG in "${DEST[@]}" ; do
     # fail fast
-    (( $FAILED )) || {
-      ${PRE[@]} cd "$SEG"
-      FAILED=$?
+    tryhard -d -g -v builtin cd "$SEG" || {
+      FAILED=1
+      break
     }
   done
 
   # go back if something went wrong
   if (( $FAILED )); then
-    cd "$START"
+    builtin cd "$START"
     echo "You can't get there from here" 1>&2
     export OLDPWD="$PREV"
     return 127
-  # run post commands
-  else
-    local -a CMD
-    local ERROR=
-    for FRAG in ${POST[@]} ; do
-      if [[ "$FRAG" != '--' ]] ; then
-        CMD+=("$FRAG")
-      else
-        # run command
-        ${CMD[@]} || ERROR=$?
-        [[ $ERROR ]] && return $ERROR
-        # make room for next command
-        CMD=()
-      fi
-    done
-    # final remaining command
-    [[ $CMD ]] && ${CMD[@]}
-
-    export OLDPWD2="$PREV"
-    export OLDPWD="$START"
   fi
-}
 
-#
-# cdmod ()
-#
-# Turn it up a notch!
-#
-# (lol this is honestly extremely overkill, but i guess i *really* wanted cd+ to be general purpose)
-# (like seriously, why on earth do i not just set _CD_MOD_PRE and _CD_MOD_POST directly ???)
-#
-# 2019-02-14
-# 4strid (Astrid Ivy)
+  export OLDPWD2="$PREV"
+  export OLDPWD="$START"
 
-cdmod () {
-  local -a PRE=()
-  local -a POST=()
-  PRE+=(${_CD_MOD_PRE[@]})
-  POST+=(${_CD_MOD_POST[@]})
-  local VAR=
-  for ARG ; do
-    case $ARG in
-      '-l')
-        echo '$_CD_MOD_PRE'
-        echo ${_CD_MOD_PRE[@]}
-        echo '$_CD_MOD_POST'
-        echo ${_CD_MOD_POST[@]}
-        return 0
-        ;;
-      '-p')
-        VAR=pre
-        PRE=()
-  ;;
-      '-P')
-        VAR=post
-        POST=()
-        ;;
-      '-h')
-        cat <<EOF
-usage: cdmod [-p|P] MODS... [ [-p|P]] MODS... ]
+  # look around. interactive only: cd+ is defined above the guard in bashrc,
+  # so a script or an agent gets the cd without a directory listing landing
+  # in the middle of its stdout
+  [[ $- == *i* ]] && $LS
 
-Nice way to build $_CD_MOD_PRE and $_CD_MOD_POST environment variables
-for use with cd+ function.
-
-  Options:
-    -p MODS...  Save all subsequent arguments to prefix mod (excepting -P)
-    -P MODS...  Save all subsequent arguments to post mods
-    -h          Print this help message
-
-EOF
-        return 0
-        ;;
-      *)
-        # escape hatch in case you need to send a literal -p or -P
-        [[ $ARG == "'-p'" ]] && ARG="-p"
-        [[ $ARG == "'-P'" ]] && ARG="-P"
-
-        case $VAR in
-          pre)
-            PRE+=("$ARG")
-            ;;
-          post)
-            POST+=("$ARG")
-            ;;
-          *)
-            echo Not sure what you are trying to modify
-            echo Use -h option for usage.
-            return 1
-            ;;
-        esac
-        ;;
-    esac
-  done
-
-  export _CD_MOD_PRE=( ${PRE[@]})
-  export _CD_MOD_POST=( ${POST[@]})
+  return 0
 }
 
 # cat_or_ls ()

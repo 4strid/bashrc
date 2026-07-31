@@ -105,6 +105,47 @@ That means Claude Code is *not* a valid place to test whether the guard works �
 it strips three of the interesting names by itself. Use `bash -lc` for that; it
 gets whatever `aliases` actually defines, with no harness in the way.
 
+### Testing an edit to these files
+
+There is no test suite, and two ways to think you tested something when you
+did not. Both fail *silently* — you get plausible output from the old code.
+
+**Any `bash -ic` has already sourced the installed `~/.bashrc`,** which sources
+the main checkout — not your branch, not your worktree. Sourcing your copy on
+top redefines what your copy defines, but leaves anything you *deleted* still
+in the shell. To actually test a copy: `unset -f` the functions in question
+first, then source your `bashrc`, then check the deleted ones are gone.
+
+**Never pipe `source` into anything.** `source x | grep -v noise` runs the
+whole file in a subshell and throws away every definition it made, so the test
+that follows silently exercises the old code. Redirect, or filter afterward.
+
+The useful positive check, in a repo whose behavior is undocumented and mostly
+lives in Astrid's fingers: diff the old against the new. `git show
+HEAD:functions > /tmp/old`, run the same list of invocations against each, and
+`diff` the transcripts. Identical output over the flag combinations that `t`,
+`v`, `T` and `reflekt` actually use is worth more than any assertion you can
+guess at, because it tests the behavior nobody wrote down.
+
+### Spaces in filenames
+
+Assume every function in `functions` is wrong about them until proven
+otherwise. These were written with unquoted `$@`, and with lists of candidate
+paths joined into one space-separated *string* and re-split by `for x in $STR`.
+Both work fine until the day a path has a space in it, then fail in a way that
+reads like the path doesn't exist.
+
+When adding to `functions`: quote expansions, and keep lists of paths in
+arrays rather than strings.
+
+The one real obstacle is that you sometimes need a glob expanded on a pattern
+that itself contains a space — and word splitting normally shreds it first.
+`local OLDIFS=$IFS; IFS=; MATCHES=( $PATTERN ); IFS=$OLDIFS` is the trick:
+with `IFS` empty there is no field splitting, but pathname expansion still runs
+and still returns one word per match. `tryhard`'s `_glob` does exactly this.
+Restore `IFS` immediately — leaving it empty changes how any shell function
+you call behaves.
+
 ### Escape hatches
 
 `exports` defines un-aliased forms. Bash expands aliases on the literal token,
