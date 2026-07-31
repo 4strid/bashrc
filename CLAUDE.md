@@ -105,6 +105,26 @@ That means Claude Code is *not* a valid place to test whether the guard works �
 it strips three of the interesting names by itself. Use `bash -lc` for that; it
 gets whatever `aliases` actually defines, with no harness in the way.
 
+### an agent's environment is as old as its process
+
+An agent's shell inherits its environment from the agent process, captured when
+that process started. Anything *exported* from this repo since then is simply
+not there — and `sob` doesn't reach it either, because `sob` re-sources into the
+shell you typed it in, not into some other process's copy.
+
+So a long-running session can be missing an export that the file plainly
+defines, which reads like the machine isn't set up. It isn't a config bug and
+there is nothing to fix. **Before concluding something isn't configured, check
+`bash -lc 'echo $THE_VAR'`** — that gets a fresh read of `exports` as it exists
+on disk right now. If it's set there and empty in your shell, your shell is
+stale; carry the value on the command that needs it and move on.
+
+This bites `SSH_AUTH_SOCK` (`exports`, and see `~/.ssh/config`) hardest, because
+the symptom is `git push` failing with *"make sure you have the correct access
+rights"* — which reads like a missing key, not a missing variable. The agent is
+socket-activated and holds the passphrase; the shell just wasn't told where it
+lives. `SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/ssh-agent.socket git push` works.
+
 ### Tests
 
     tests/run                  sanity suite; exits 0 or 1
