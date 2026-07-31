@@ -38,10 +38,13 @@ attempt () {
 #
 # Usage: tryhard [options] CMD TARGET
 #
+# -r walks breadth first, so the shallowest match wins. that is almost always
+# the one you meant -- depth first would dive to the bottom of the first
+# subdirectory it saw and hand you something six levels down while your file
+# sat right there in the current directory
+#
 # 4strid (Astrid Ivy)
 # 2019-02-14
-
-# TODO: add .tryhardignore config file (mostly for .git and node_modules lol)
 
 tryhard () {
 
@@ -54,6 +57,14 @@ tryhard () {
 
   local -a _TRY_COMMON=("$HOME" "/")
   local -a _TRY_CFG=("/etc")
+  # directories -r refuses to descend into, matched by name as globs. there
+  # never was a .tryhardignore -- .tryhardrc was already an rc file, so it
+  # just sets this too.
+  # .git is belt and braces: the subdirectory glob below is `*/', which
+  # doesn't match a leading dot unless dotglob is on -- and dotglob lives in
+  # shopts, below the interactive guard. so no dot-directory is walked here
+  # today, and listing one only matters the day that changes
+  local -a _TRY_IGNORE=(".git" "node_modules")
   local -a TRY
 
   [[ -e $HOME/.tryhardrc ]] && source $HOME/.tryhardrc
@@ -116,8 +127,9 @@ tryhard () {
     -g       Adds a glob star to the end of TARGET
     -G       Adds a glob star to both ends of TARGET
     -D DIR   Use DIR as base search directory
-    -r       Recursively search. If search directory is not explicitly
-              provided, starts in current working directory
+    -r       Recursively search, breadth first, so the shallowest match
+              wins. If search directory is not explicitly provided,
+              starts in current working directory
     -m       Perform CMD on all found TARGETs rather than stopping at the first one
     -v       Prints full path of resolved target(s) as it goes along
     -V       Prints full path of resolved target(s) and additional debug information
@@ -125,7 +137,9 @@ tryhard () {
 
   Files:
     ~/.tryhardrc Specify default directories to search by setting
-    _TRY_COMMON for -c (default) and _TRY_CFG for -e flags
+    _TRY_COMMON for -c (default) and _TRY_CFG for -e flags.
+    _TRY_IGNORE lists directory names -r won't descend into
+    (default .git and node_modules); each is a glob
 EOF
       ;;
     ?)
@@ -161,53 +175,76 @@ EOF
     IFS=$OLDIFS
   }
 
+  # is this a directory -r should leave alone? matches on the last path
+  # segment, so an ignore entry never has to know where the thing turned up
+  _ignored () {
+    local PAT
+    for PAT in "${_TRY_IGNORE[@]}" ; do
+      [[ ${1##*/} == $PAT ]] && return 0
+    done
+    return 1
+  }
+
   _try () {
-    local T TG
-    local -a PATTERNS MATCHES SUBS
-    for T in "$@" ; do
-      # the target as typed, and the target under $T
-      PATTERNS=("$TARGET" "$T/$TARGET")
-      # "//" just kind of bugs me lol
-      [[ $T == "/" ]] && PATTERNS=("/$TARGET")
-      (( $GLOB == 1 )) && PATTERNS[-1]="${PATTERNS[-1]}*"
-      (( $GLOB == 2 )) && PATTERNS=("$T/*$TARGET*")
-      (( $VERBOSE >= 2 )) && {
-        echo "DEBUG T $T" 1>&2
-        echo "DEBUG PATTERNS ${PATTERNS[*]}" 1>&2
-      }
-      _glob "${PATTERNS[@]}"
-      for TG in "${MATCHES[@]}" ; do
-        (( $VERBOSE >= 2 )) && echo "DEBUG TG $TG" 1>&2
-        if (( $DIRS )); then
-          if [[ -d "$TG" ]]; then
-            (( $VERBOSE )) && [[ $TG != $TARGET ]] && echo "$TG" 1>&2
-            "${CMD[@]}" "$TG"
-            DONE=$?
-            (( $MULTI )) || return $DONE
+    local T TG SUB
+    local -a PATTERNS MATCHES QUEUE NEXT
+
+    # breadth first: a whole level of directories, then everything one step
+    # under it. this used to recurse, which meant the first subdirectory it
+    # found got searched to the bottom before the second one got looked at
+    # at all -- so the winner was whatever was deepest down the alphabetically
+    # first branch, rather than whatever was closest
+    QUEUE=("$@")
+    while (( ${#QUEUE[@]} )); do
+      NEXT=()
+      for T in "${QUEUE[@]}" ; do
+        # the target as typed, and the target under $T
+        PATTERNS=("$TARGET" "$T/$TARGET")
+        # "//" just kind of bugs me lol
+        [[ $T == "/" ]] && PATTERNS=("/$TARGET")
+        (( $GLOB == 1 )) && PATTERNS[-1]="${PATTERNS[-1]}*"
+        (( $GLOB == 2 )) && PATTERNS=("$T/*$TARGET*")
+        (( $VERBOSE >= 2 )) && {
+          echo "DEBUG T $T" 1>&2
+          echo "DEBUG PATTERNS ${PATTERNS[*]}" 1>&2
+        }
+        _glob "${PATTERNS[@]}"
+        for TG in "${MATCHES[@]}" ; do
+          (( $VERBOSE >= 2 )) && echo "DEBUG TG $TG" 1>&2
+          if (( $DIRS )); then
+            if [[ -d "$TG" ]]; then
+              (( $VERBOSE )) && [[ $TG != $TARGET ]] && echo "$TG" 1>&2
+              "${CMD[@]}" "$TG"
+              DONE=$?
+              (( $MULTI )) || return $DONE
+            fi
           fi
-        fi
-        if (( $FILES )); then
-          if [[ -f "$TG" ]]; then
-            (( $VERBOSE )) && [[ $TG != $TARGET ]] && echo "$TG" 1>&2
-            "${CMD[@]}" "$TG"
-            DONE=$?
-            (( $MULTI )) || return $DONE
+          if (( $FILES )); then
+            if [[ -f "$TG" ]]; then
+              (( $VERBOSE )) && [[ $TG != $TARGET ]] && echo "$TG" 1>&2
+              "${CMD[@]}" "$TG"
+              DONE=$?
+              (( $MULTI )) || return $DONE
+            fi
           fi
-        fi
-      done
-      # TODO: breath first instead of depth first search
-      if (( $RECURSE )); then
-        if [[ -d $T ]]; then
-          # expand the subdirectories *here* -- the recursive call takes real
-          # paths now, so it can no longer glob the pattern on our behalf
-          _glob "$T/*/"
-          SUBS=("${MATCHES[@]%/}")
-          _try "${SUBS[@]}"
-          (( $MULTI )) || {
-            [[ $DONE ]] && return $DONE
+        done
+
+        # stock the next level. the queue holds real paths, so the glob
+        # happens *here* rather than being handed down as a pattern
+        (( $RECURSE )) || continue
+        [[ -d $T ]] || continue
+        _glob "$T/*/"
+        for SUB in "${MATCHES[@]%/}" ; do
+          # an unmatched glob comes back untouched, so check it's real
+          [[ -d $SUB ]] || continue
+          _ignored "$SUB" && {
+            (( $VERBOSE >= 2 )) && echo "DEBUG SKIP $SUB" 1>&2
+            continue
           }
-        fi
-      fi
+          NEXT+=("$SUB")
+        done
+      done
+      QUEUE=("${NEXT[@]}")
     done
   }
 
@@ -224,10 +261,15 @@ EOF
 # 
 # Usage: tryfind [OPTIONS] TARGET [...TARGETS]
 #
-# (shoutouts to GNU sort <3)
+# (RIP `sort -u', 2019-2026. it deduplicated beautifully and it sorted, which
+#  was fine while tryhard searched depth first and the order was meaningless
+#  anyway. now that tryhard comes back shallowest-first, alphabetical is
+#  actively worse than the order the matches arrived in -- so we dedupe
+#  without sorting and the nearest thing stays at the top)
 #
 #  dependencies
 #    tryhard
+#    /bin/awk
 #
 # 4strid (Astrid Ivy)
 # 2019-08-20
@@ -265,9 +307,12 @@ tryfind () {
     -g   Add globstar to the end of filename
     -u   Also search directory above
     -U   Also search up to 3 directories above
-    -v   Print all search paths 
+    -v   Print all search paths
     -h   Print this help message
-  
+
+  Results come back nearest first. Directories named in _TRY_IGNORE in
+  ~/.tryhardrc are never descended into (default .git and node_modules)
+
   See also: tryhard () on which this is based
 EOF
       return 0
@@ -280,11 +325,17 @@ EOF
 
   local FLAGS="$TYPE $MULTI $RECURSE $GLOB $VERBOSE"
 
-  # lmao we use `sort' just to remove duplicates because I couldn't figure another way out
-  # it's *pretty damn silly* that it had the exact functionality i needed though
+  # awk keeps the first time it sees a line and drops every repeat, which is
+  # `sort -u' minus the sorting -- the nearest match stays at the top where
+  # breadth-first put it.
+  # `./x' and `x' are the same file and tryhard tries both spellings, so they
+  # count as one for the purpose of "seen it" -- but we print whichever turned
+  # up first rather than rewriting it, because -D hands back absolute paths
+  # and those should stay exactly as they came
   # ($FLAGS stays unquoted on purpose -- it's a bag of flags. -D takes its
   #  directory as its own argument now, so a base dir with a space survives)
-  tryhard -D "$BASEDIR" $FLAGS ls -d -1 "$@" | sed 's/[ \t]*$//' | sort -u
+  tryhard -D "$BASEDIR" $FLAGS ls -d -1 "$@" | sed 's/[ \t]*$//' |
+    awk '{ K = $0 ; sub(/^\.\//, "", K) } !SEEN[K]++'
 }
 
 lastcmd () {
