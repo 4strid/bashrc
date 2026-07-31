@@ -128,6 +128,11 @@ check "-g finds a file" "report" "$(tryhard -g echo report 2>/dev/null)"
 check "-d finds the directory instead" "./report dir" "$(tryhard -d -g echo report 2>/dev/null)"
 check "-d refuses a plain file" "no dir here" \
   "$(tryhard -d -g echo 'no dir here' 2>/dev/null)"
+# the mirror of -d, and what `v' leans on: a half-typed name must not land on
+# a directory that merely starts the same way. unfound, it falls through
+# untouched, so vim gets what you actually typed
+check "-f refuses a directory" "docs" "$(tryhard -f -G echo docs 2>/dev/null)"
+check "-f still finds a file" "report" "$(tryhard -f -g echo report 2>/dev/null)"
 check "-G matches a substring with a space" "./my docs" \
   "$(tryhard -G echo docs 2>/dev/null)"
 check "-r recurses into a spacey directory" "./my docs/deep nest" \
@@ -245,6 +250,12 @@ check "a different directory is a different claude" "claude ~/plain" \
   "$(builtin cd "$S/plain"; screenclaude)"
 check "v still names the screen after the file" "vim $S/report" \
   "$(builtin cd "$S"; screenvim report)"
+check "v asks tryhard for files only" "alias v='tryhard -f -g screenvim'" \
+  "$(bash --norc --noprofile -c '
+      source "$1" >/dev/null 2>&1
+      source "$2" >/dev/null 2>&1
+      alias v
+    ' _ "$REPO/functions" "$REPO/shortcuts")"
 
 # ---------------------------------------------------------------- the guard
 

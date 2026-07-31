@@ -155,6 +155,13 @@ the same pile of `t`/`v`/`T`/`reflekt`-shaped invocations against an old
 means your refactor moved nothing. Reach for it whenever you touch `tryhard`,
 which everything else is built on.
 
+**But read "identical" narrowly.** It sources `functions` and `exports` and
+drives `tryhard` directly — it never sources `shortcuts`, so no alias is ever
+expanded in it. Change what `v` or `t` *passes* to `tryhard` and the
+differential still says identical, because as far as it is concerned nothing
+happened. It answers one question only: did `functions` change behavior. An
+alias change needs a check in `tests/run` instead.
+
 **Run these on demand, not by reflex.** Touching `functions` — especially
 `tryhard` or `cd+` — is worth a run. So is anything structural, or moving a
 definition across the guard. Adding an alias, fixing a comment, editing this

@@ -22,8 +22,11 @@ alias t='tryhard -g'
 alias T='tryhard -G -r'
 alias t!='tryhard -g `lastcmd`'
 alias T!='tryhard -G -r `lastcmd`'
-# vim, but in a screen named after whatever it's editing, one per file
-alias v='tryhard -g screenvim'
+# vim, but in a screen named after whatever it's editing, one per file.
+# -f because you are opening a *file*: without it a half-typed name can
+# land on a directory that merely started the same way, and vim opens the
+# netrw listing for it instead of the thing you meant
+alias v='tryhard -f -g screenvim'
 alias V='tryhard -G -r vim'
 # claude, in a screen named after the directory it was started in, one
 # per working directory -- same deal as v, for the same reason

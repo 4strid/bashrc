@@ -51,6 +51,11 @@ probe () {
   run tryhard -g -v echo functi
   run tryhard -G echo unction
   run tryhard -d -g echo tests
+  # -f is what `v' rides on, so a refactor that quietly loosens it should
+  # show up here rather than the next time a directory eats a filename
+  run tryhard -f -g echo functi
+  run tryhard -f -G echo test
+  run tryhard -f -g echo tests
   run tryhard -e -g echo hostn
   run tryhard -u -g echo bashrc
   run tryhard -U -g echo bashrc
