@@ -43,3 +43,9 @@ alias ga='git add'
 alias gA='git add -A'
 alias gm='git commit -m'
 alias gp='git push'
+# every branch that isn't in yet, hauled in at once. it's an octopus merge,
+# so it's all or nothing: if any two of them touched the same lines it
+# refuses and puts you back exactly where you were, nothing half-merged.
+# the trailing HEAD is a guard — with no branches left to take, a bare
+# `git merge` would helpfully go merge your upstream instead
+alias gall='git merge --no-ff $(git branch --format="%(refname:short)" --no-merged) HEAD'

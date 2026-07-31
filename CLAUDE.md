@@ -180,9 +180,9 @@ alias change needs a check in `tests/run` instead.
 definition across the guard. Adding an alias, fixing a comment, editing this
 file: don't bother. There's no watcher and no hook, deliberately.
 
-When you do test by hand, there are two ways to think you tested something
-when you didn't. Both fail *silently*, handing you plausible output from the
-old code:
+When you do test by hand, there are three ways to think you tested something
+when you didn't. The first two fail *silently*, handing you plausible output
+from the old code:
 
 **Any `bash -ic` has already sourced the installed `~/.bashrc`,** which
 sources the main checkout — not your branch, not your worktree. Sourcing your
@@ -213,6 +213,13 @@ any path that goes into the name (so a symlink and the long way round are one
 screen, not two), and leave *arguments* out unless they're the thing itself.
 `tests/run`'s "the little guys" section pins those names — stub `inscreen` and
 check the name, which is the whole mechanism.
+**An alias can't be used by anything parsed alongside its definition.** Bash
+expands aliases at parse time, and it parses a whole `-c` string, line, or
+`{ }` block before running any of it — so `bash -ic 'source shortcuts; myalias'`
+reports `myalias: command not found` even though the source worked. This one at
+least fails loudly, but it looks exactly like a broken alias. Put the calls in a
+script file with real newlines and source *that* (functions are unaffected —
+this is aliases only, which means `shortcuts`, `aliases` and `danger`).
 
 ### Spaces in filenames
 
