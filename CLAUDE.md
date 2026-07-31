@@ -133,9 +133,22 @@ stale; carry the value on the command that needs it and move on.
 
 This bites `SSH_AUTH_SOCK` (`exports`, and see `~/.ssh/config`) hardest, because
 the symptom is `git push` failing with *"make sure you have the correct access
-rights"* — which reads like a missing key, not a missing variable. The agent is
-socket-activated and holds the passphrase; the shell just wasn't told where it
-lives. `SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/ssh-agent.socket git push` works.
+rights"* — which reads like a missing key rather than a missing variable.
+
+That one error covers two unrelated causes, and guessing between them wastes
+the time. **`ssh-add -l` tells them apart, so run it first:**
+
+| `ssh-add -l` says | what's wrong | fix |
+|---|---|---|
+| *"Could not open a connection"* | your shell has no `SSH_AUTH_SOCK` — stale env, see above | `SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/ssh-agent.socket git push` |
+| *"The agent has no identities"* | agent is fine, the key aged out — `~/.ssh/config` sets `AddKeysToAgent 24h` | a human runs `ssh-add`; nothing else can |
+| lists a key | neither; look elsewhere | — |
+
+The second one is not fixable from an agent shell and no amount of retrying
+changes it: adding a key needs the passphrase, which needs a human at a
+terminal. Say so and hand it over rather than burning turns on it. A session
+that runs longer than a day will watch a working push start failing halfway
+through for exactly this reason, with nothing having changed.
 
 ### Tests
 
