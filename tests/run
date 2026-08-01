@@ -59,9 +59,21 @@ trap '/bin/rm -rf "$SANDBOX"' EXIT
 
 mkdir -p "$SANDBOX/my docs/deep nest" "$SANDBOX/plain" "$SANDBOX/report dir"
 touch "$SANDBOX/report"
-# a file and a directory with the same prefix, which is the whole -d problem
+
+# a tree where depth first and breadth first disagree about the answer.
+# alpha sorts first and holds the deep copy; zeta sorts last and holds the
+# near one. dive into alpha and you never look at zeta
+mkdir -p "$SANDBOX/tree/alpha/deep" "$SANDBOX/tree/zeta"
+mkdir -p "$SANDBOX/tree/node_modules/pkg" "$SANDBOX/tree/skipme"
+touch "$SANDBOX/tree/alpha/deep/needle" "$SANDBOX/tree/zeta/needle"
+touch "$SANDBOX/tree/alpha/deep/hay" "$SANDBOX/tree/node_modules/pkg/hay"
+touch "$SANDBOX/tree/skipme/hay"
+
+# a file and a directory with the same prefix, which is the whole -d problem.
+# +=, not =, so the default ignores are still in play alongside ours
 cat > "$SANDBOX/.tryhardrc" <<'EOF'
 _TRY_COMMON=("." ".." "$HOME" "/")
+_TRY_IGNORE+=("skipme")
 EOF
 
 export HOME="$SANDBOX"
@@ -149,12 +161,62 @@ builtin cd "$S/my docs/deep nest"
 check "reaches \$HOME from elsewhere" "$HOME/plain" \
   "$(tryhard -d -g echo plain 2>/dev/null | head -1)"
 
+# -------------------------------------------------------------- breadth first
+
+# -r walks a level at a time, so the answer is the *closest* match and not
+# whatever sat at the bottom of the alphabetically first branch. depth first
+# would say tree/alpha/deep/needle here, which is two levels further away
+section "breadth first"
+
+builtin cd "$S"
+check "the nearest match wins, not the deepest" "$S/tree/zeta/needle" \
+  "$(tryhard -f -r -D "$S/tree" echo needle 2>/dev/null)"
+check "and it only says it once" "1" \
+  "$(tryhard -f -r -D "$S/tree" echo needle 2>/dev/null | wc -l)"
+# -m still visits everything; breadth first only changes the order it arrives
+check "-m still finds both, nearest first" "$S/tree/zeta/needle $S/tree/alpha/deep/needle" \
+  "$(tryhard -f -r -m -D "$S/tree" echo needle 2>/dev/null | tr '\n' ' ' | sed 's/ $//')"
+
+# ---------------------------------------------------------------- _TRY_IGNORE
+
+# there is no .tryhardignore. ~/.tryhardrc was already an rc file, so it sets
+# _TRY_IGNORE too -- names -r refuses to descend into. this is what keeps
+# tryfind from spending its afternoon in node_modules
+section "_TRY_IGNORE"
+
+builtin cd "$S"
+# three copies of `hay' down there; only the one outside an ignored directory
+# should ever come back, even with -m asking for all of them
+check "only the un-ignored copy comes back" "$S/tree/alpha/deep/hay" \
+  "$(tryhard -f -r -m -D "$S/tree" echo hay 2>/dev/null)"
+check "doesn't descend into node_modules" "" \
+  "$(tryhard -f -r -m -D "$S/tree" echo hay 2>/dev/null | grep node_modules)"
+check "~/.tryhardrc can add to the list" "" \
+  "$(tryhard -f -r -m -D "$S/tree" echo hay 2>/dev/null | grep skipme)"
+# only descent is ignored -- name it outright and you still get it, which is
+# the difference between "don't go rummaging in there" and "this is invisible"
+check "an ignored directory is still findable by name" "$S/tree/node_modules" \
+  "$(tryhard -d -r -D "$S/tree" echo node_modules 2>/dev/null)"
+
 # ------------------------------------------------------------------ tryfind
 
 section "tryfind"
 
 builtin cd "$S"
 check "finds spacey directories" "./my docs" "$(tryfind -d -g 'my d' 2>/dev/null)"
+# it used to `sort -u`, which threw the depth ordering away and handed back
+# the alphabetical one instead. dedupe without sorting and near stays near
+check "nearest first, not alphabetical" "$S/tree/zeta/needle $S/tree/alpha/deep/needle" \
+  "$(tryfind -f -D "$S/tree" needle 2>/dev/null | tr '\n' ' ' | sed 's/ $//')"
+check "still dedupes" "1" \
+  "$(tryfind -d -D "$S/tree" zeta 2>/dev/null | wc -l)"
+# tryhard tries the name both as typed and under the search directory, so an
+# exact match in the current directory used to come back twice, once with a
+# `./' on the front and once without
+builtin cd "$S/tree/zeta"
+check "./x and x are one file, not two" "needle" \
+  "$(tryfind -f -R needle 2>/dev/null)"
+builtin cd "$S"
 check "-D takes a base directory with a space" "$S/my docs/deep nest" \
   "$(builtin cd /; tryfind -d -D "$S/my docs" -g deep 2>/dev/null)"
 
@@ -267,14 +329,37 @@ section "the guard"
 NAMES=$(bash --norc --noprofile -c \
   'source "$1"; source "$2"; compgen -a' _ "$REPO/aliases" "$REPO/shortcuts")
 
+# names we shadow knowingly and intend to keep shadowing. the rule is worth
+# keeping absolute *by default* -- it's how we stopped agent shells hanging --
+# but it's a rule about not eating a command somebody meant to run, and if
+# nobody ever meant the other one there's nothing to protect. so: an exception
+# needs a reason written next to it, and it stays listed rather than deleted,
+# because a waiver nobody can see is just a broken test
+declare -A WONTFIX=(
+  [gs]="ghostscript. \`git status' a hundred times a day, postscript never"
+)
+
 COLLISIONS=
+WAIVED=
 for N in $NAMES ; do
   BIN=$(bash --norc --noprofile -c 'type -P "$1"' _ "$N" 2>/dev/null)
   KIND=$(bash --norc --noprofile -c 'type -t "$1"' _ "$N" 2>/dev/null)
+  [[ ! $BIN && $KIND != builtin && $KIND != keyword ]] && continue
+  # only prints when the collision is actually there, so an entry for
+  # something this machine doesn't have installed stays quiet instead of
+  # failing somebody else's run
+  [[ ${WONTFIX[$N]} ]] && {
+    WAIVED+="$N "
+    continue
+  }
   [[ $BIN ]] && COLLISIONS+="$N($BIN) "
   [[ $KIND == builtin || $KIND == keyword ]] && COLLISIONS+="$N($KIND) "
 done
 check "no alias above the guard shadows a real command" "" "$COLLISIONS"
+
+for N in $WAIVED ; do
+  echo "  won't fix: $N shadows $(type -P "$N") -- ${WONTFIX[$N]}"
+done
 
 # strip comments first, or the explanation of the rule trips the rule
 SUDO=$(for f in functions exports aliases shortcuts reflekt ; do

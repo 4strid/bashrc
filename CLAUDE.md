@@ -51,6 +51,22 @@ only, `danger` (below) holds everything that overrides a real command. Moving
 a definition between those two files changes who it applies to — that is the
 entire mechanism.
 
+**`shopts` is below the guard too, which means globbing itself is not the same
+on both sides.** `functions` is above it and is almost entirely globbing, so
+every glob in there runs under two different sets of rules depending on who
+called it. The two that bite:
+
+- `nullglob` — set for a human, so an unmatched pattern expands to *nothing*.
+  Unset for an agent or a script, so the same pattern comes back as its own
+  literal text. Any code that globs a pattern and then walks the results has
+  to survive being handed the pattern back; `tryhard` does it with a `-d`/`-f`
+  test on each result, which throws the literal out.
+- `dotglob` — unset on both sides, so `*/` never matches a dot-directory. A
+  dot-name in an ignore or exclude list here is therefore decorative, and a
+  loop over `*/` will never find `.git` to skip in the first place.
+
+So a glob tested only in your own terminal has had half its behavior checked.
+
 (A consequence worth knowing: `PS1` is built in `exports`, above the guard —
 deliberately, for *every* shell, because iv/os wants one where nobody is
 looking — but it interpolates `` `time` ``, which is only aliased in `danger`,
@@ -105,6 +121,17 @@ were `sudo`-aliased until 2026-07-29 and were removed for causing the lockouts.
 a real binary or a shell builtin, or the body says `sudo`, it goes in `danger`.
 Both files say so in their headers — keep it that way, or agent shells start
 breaking again in ways nobody will connect back to this repo.
+
+**One name is waived, on purpose: `gs`.** It's `git status` in `shortcuts` and
+it shadows ghostscript. Won't fix — the invariant is there to stop an alias
+eating a command somebody meant to run, and nobody here has ever meant the
+postscript interpreter; `/usr/bin/gs` still reaches it. `tests/run` carries a
+`WONTFIX` map that waives it by name and prints it rather than hiding it, so
+the suite is green and the exception stays visible. **Don't "fix" this by
+moving `gs` to `danger`** — that would take it away from the interactive shell
+that actually types it and give it to nobody. If you add another waiver, the
+reason goes next to the entry; an unexplained one is indistinguishable from
+the bug this rule exists to catch.
 
 ### a filter that isn't this repo's doing
 
@@ -180,9 +207,9 @@ alias change needs a check in `tests/run` instead.
 definition across the guard. Adding an alias, fixing a comment, editing this
 file: don't bother. There's no watcher and no hook, deliberately.
 
-When you do test by hand, there are three ways to think you tested something
-when you didn't. The first two fail *silently*, handing you plausible output
-from the old code:
+When you do test by hand, there are four ways to think you tested something
+when you didn't. The first three fail *silently*, handing you plausible output
+from the old code — or from nothing at all:
 
 **Any `bash -ic` has already sourced the installed `~/.bashrc`,** which
 sources the main checkout — not your branch, not your worktree. Sourcing your
@@ -193,6 +220,14 @@ which is what `tests/run` does.
 **Never pipe `source` into anything.** `source x | grep -v noise` runs the
 whole file in a subshell and throws away every definition it made, so the
 test that follows silently exercises the old code. Redirect, or filter after.
+
+**Nothing that `exec`s a binary can run anything defined here.** `timeout 60
+tryfind foo`, `env FOO=1 cd+ bar`, `xargs vim` — every one of them looks up a
+*file* named `tryfind`, doesn't find one, and fails. Practically everything
+this repo defines is a shell function or an alias, so this catches you the
+moment you try to time or sandbox one, and the symptom is empty output that
+reads exactly like the function ran and found nothing. Wrap the shell instead:
+`timeout 60 bash -c 'source functions; tryfind foo'`.
 
 ### One screen per thing
 
