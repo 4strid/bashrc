@@ -28,7 +28,7 @@
 ######
 
 # which session are we dancing with
-SCREEN_SESSION=${SCREEN_SESSION:-ai}
+SCREEN_SESSION=${SCREEN_SESSION:-ssh}
 
 
 # in_screen ()
