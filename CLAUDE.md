@@ -248,6 +248,17 @@ any path that goes into the name (so a symlink and the long way round are one
 screen, not two), and leave *arguments* out unless they're the thing itself.
 `tests/run`'s "the little guys" section pins those names — stub `inscreen` and
 check the name, which is the whole mechanism.
+
+**`v` and `c` each have a second front door, in the other repo.** `~/bin/vvim`
+and `~/bin/cclod` (`pc`, labelled `"vim"` and `"Claude-code"` on the blackbox
+right-click menu) call the same `screenvim` and `screenclaude` — they exist
+because a mouse has no terminal to be typed in, so they bring their own
+alacritty and are otherwise the shortcut. That is the *point*: clicking the
+menu and typing `v` have to land in the same session, and they only do so
+because both go through the one function that builds the name. So a change to
+how a name is built now has a caller outside this repo, and `tests/differential`
+will not see it — it never sources `shortcuts` and has never heard of `~/bin`.
+Grep `pc` before assuming `screenvim` and `screenclaude` have one caller each.
 **An alias can't be used by anything parsed alongside its definition.** Bash
 expands aliases at parse time, and it parses a whole `-c` string, line, or
 `{ }` block before running any of it — so `bash -ic 'source shortcuts; myalias'`

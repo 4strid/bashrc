@@ -9,6 +9,13 @@
 #              one per file, c is one per working directory, g is one
 #              per search
 #
+# screenvim and screenclaude have a caller outside this repo: ~/bin/vvim
+# and ~/bin/cclod, which are the same two things off the blackbox
+# right-click menu and bring their own alacritty, since a mouse has no
+# terminal to be typed in. They go through these functions rather than
+# reimplementing the name, so that clicking and typing land in the same
+# session -- which is only true for as long as they keep doing that.
+#
 # coming in   ssh lands you in the session, yanking it off whatever
 #             terminal had it before. no session yet? one is made.
 # going out   exiting the shell detaches instead of tearing down, so
