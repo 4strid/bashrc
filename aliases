@@ -27,7 +27,6 @@
 #######
 
 # i mix these up all the time ok?...
-alias vim='vim_or_cd'
 alias cat='cat_or_ls'
 alias ls='ls_or_cat'
 
