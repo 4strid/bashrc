@@ -4,7 +4,7 @@
 # conventions, common mistakes, and cool new powers
 #
 # dependencies
-#   cd_or_vim
+#   cd+
 #   vim_or_cd
 #   cat_or_ls
 #   ls_or_cat
@@ -27,12 +27,12 @@
 #######
 
 # i mix these up all the time ok?...
-alias cd='cd_or_vim'
 alias vim='vim_or_cd'
 alias cat='cat_or_ls'
 alias ls='ls_or_cat'
 
 # dot dots
+alias cd='cd+'
 alias ..='cd+ ..'
 alias ...='cd+ .. ..'
 

@@ -566,23 +566,6 @@ vim_or_cd () {
   fi
 }
 
-# cd_or_vim
-#
-# you know me all too well
-#
-# 4strid (Astrid Ivy)
-# 2019
-
-cd_or_vim () {
-  if [[ ! $1 ]]; then
-    cd+
-  elif [[ -f $1 ]]; then
-    $EDITOR "$@"
-  else
-    cd+ "$@"
-  fi
-}
-
 # determine if charging or not
 #
 # dependencies
