@@ -55,3 +55,4 @@ alias gp='git push'
 # `git merge` would helpfully go merge your upstream instead
 alias gall='git merge --no-ff $(git branch --format="%(refname:short)" --no-merged) HEAD'
 alias gab='git merge --abort'
+alias grc='git rebase --continue'
