@@ -60,7 +60,7 @@ export C_RESET=$reset
 # dependencies
 #   ok
 #   whatbranch
-#   batcolor
+#   cpucolor
 #   inception
 #   [danger/time alias]
 #   /bin/vim
@@ -75,4 +75,4 @@ export C_RESET=$reset
 # times the prompt and prints real/user/sys into the middle of it. that process
 # is usually `bash --norc -i', i.e. exactly what you reach for to test this
 # repo. anything that sources bashrc builds its own copy and needs no export
-PS1=$'\[${red}\]`ok`\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`batcolor`\]@\[${pink}\]\h \[${light}\]\w\[${pink}\]]`inception`\[${reset}\]$ '
+PS1=$'\[${red}\]`ok`\[${green}\]`whatbranch`\[${pink}\][`time` \u\[`cpucolor`\]@\[${pink}\]\h \[${light}\]\w\[${pink}\]]`inception`\[${reset}\]$ '

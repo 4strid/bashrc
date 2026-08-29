@@ -14,8 +14,8 @@
 #
 # dependencies
 #   cat_or_ls
-#   ls_or_cat
 #   cd+
+#   /bin/ls
 #   /bin/grep
 #   /bin/tree
 #   /bin/lynx
@@ -37,7 +37,7 @@ alias RM='rm -rf'
 #alias vim='vim_or_cd'
 alias cd='cd+'
 alias cat='cat_or_ls'
-alias ls='ls_or_cat'
+alias ls='ls --color=auto'
 
 # defaults, but better. each of these shadows the real binary:
 # -i hangs forever with nothing to answer it, and the filtering ones lie by

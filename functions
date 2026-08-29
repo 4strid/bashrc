@@ -545,7 +545,98 @@ _bat_match () {
   [[ `attempt acpi -i` =~ (Discharging|Charging|Unknown|Not charging),\ ([0-9]{1,3})%.*(remaining|until\ charged|.) ]]
 }
 
-# used in my terminal prompt. The @ sign is a battery indicator ^_^
+# _cpu_match ()
+#
+# how busy have we been since the last time anybody asked?
+#
+# /proc/stat counts jiffies since boot, so a single read tells you nothing
+# about *now* -- you need two and the gap between them. rather than sleep
+# (this runs in the prompt, it can't afford a second), we stash the last
+# read and diff against it, so the window is "since the previous prompt",
+# which is a nicer thing to know anyway. the first call has nothing to diff
+# against, so it lands on the since-boot average, which is fine and beats
+# an empty answer
+#
+# the stash is a *file* and not a variable, which looks like paranoia and
+# isn't: PS1 calls this from inside a backtick, and a command substitution
+# is a subshell. every variable it sets dies with it. anything in the prompt
+# that needs to remember the last time it ran has to put it somewhere the
+# subshell doesn't own. one file per shell, in the runtime dir, so two
+# terminals don't eat each other's samples
+#
+# sets _CPU_USAGE to a whole-number percentage. returns 1 if it couldn't
+#
+# 4strid (Astrid Ivy)
+# 2026
+
+_CPU_STATE=${XDG_RUNTIME_DIR:-/tmp}/.cpucolor.$$
+
+_cpu_match () {
+  local FIELDS IDLE=0 TOTAL=0 F LAST_IDLE=0 LAST_TOTAL=0
+  read -ra FIELDS < /proc/stat || return 1
+  # cpu user nice system idle iowait irq softirq steal guest guest_nice
+  [[ ${FIELDS[0]} == cpu ]] || return 1
+  for F in "${FIELDS[@]:1}"; do
+    (( TOTAL += F ))
+  done
+  # idle + iowait: both of them are the machine not doing anything for me
+  (( IDLE = FIELDS[4] + FIELDS[5] ))
+
+  local LAST_USAGE=
+  [[ -r $_CPU_STATE ]] && read -r LAST_IDLE LAST_TOTAL LAST_USAGE < "$_CPU_STATE"
+
+  local DIDLE=$(( IDLE - LAST_IDLE )) DTOTAL=$(( TOTAL - LAST_TOTAL ))
+  if (( DTOTAL > 0 )); then
+    _CPU_USAGE=$(( 100 * (DTOTAL - DIDLE) / DTOTAL ))
+  else
+    # no time passed -- two prompts inside one 10ms jiffy, which you get by
+    # leaning on enter. keep the last answer rather than flickering back to
+    # the default color over a question we simply can't answer yet
+    _CPU_USAGE=$LAST_USAGE
+    [[ $_CPU_USAGE ]] || return 1
+  fi
+
+  echo "$IDLE $TOTAL $_CPU_USAGE" > "$_CPU_STATE" 2>/dev/null
+}
+
+# used in my terminal prompt. The @ sign is a load indicator ^_^
+#
+# was batcolor and the battery for years; same numbers, mirrored, because
+# cpu runs the other way round -- a full battery is good news and a full
+# cpu is not. 14/42 left on the battery becomes 86/58 used on the cpu, so
+# the colors still mean what they always meant. no charging state to have
+# an opinion about, so blue retired with it
+#
+# dependencies
+#   _cpu_match
+#
+# 4strid (Astrid Ivy)
+# 2026
+
+cpucolor () {
+  # hardcoded to pink for now
+  local COLOR=$'\033[1;35m' # "bold purple"
+  _cpu_match && {
+    if (( $_CPU_USAGE >= 86 )); then
+      COLOR=$'\033[1;31m' # Pegged = red
+    elif (( $_CPU_USAGE >= 58 )); then
+      COLOR=$'\033[1;33m' # Working = yellow
+    elif (( $_CPU_USAGE > 14 )); then
+      COLOR=$'\033[1;32m' # Doing something = green
+    fi
+    # 14 and under is the machine sitting there breathing, which is the
+    # normal state of affairs and doesn't want a color announcing it. the
+    # cutoff is the mirror of the battery's old 86, so the numbers stay a
+    # matched set: 14/42 up there, 86/58 and 14 down here
+  }
+  echo $COLOR
+}
+
+# like acpi but with colors
+#
+# the coloring used to be batcolor, which the prompt shared with it. the
+# prompt watches the cpu now (see cpucolor) and took the name with it, and
+# this is the only caller the battery version had left, so it lives here
 #
 # dependencies
 #   _bat_match
@@ -553,13 +644,14 @@ _bat_match () {
 # 4strid (Astrid Ivy)
 # 2019
 
-batcolor () {
+bat () {
   _bat_match
+  local MSG=$BASH_REMATCH
   local CHARGE=${BASH_REMATCH[1]}
   local NUM=${BASH_REMATCH[2]}
   # hardcoded to pink for now
   local COLOR=$'\033[1;35m' # "bold purple"
-  [[ $BASH_REMATCH ]] && {
+  [[ $MSG ]] && {
     if [[ $CHARGE == Discharging ]]; then
       if (( $NUM <= 14 )); then
         COLOR=$'\033[1;31m' # Critical = red
@@ -576,25 +668,10 @@ batcolor () {
       fi
     fi
   }
-  echo $COLOR
-}
-
-# like acpi but with colors
-#
-# dependencies
-#   _bat_match
-#   batcolor
-#
-# 4strid (Astrid Ivy)
-# 2019
-
-bat () {
-  _bat_match
-  local MSG=$BASH_REMATCH
   [[ ! $MSG ]] && MSG=`acpi -i`
   local RESET=$'\033[0m'
 
-  echo `batcolor`${MSG}${RESET}
+  echo $COLOR${MSG}${RESET}
 }
 
 # whatbranch ()

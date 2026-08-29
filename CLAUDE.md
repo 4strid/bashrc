@@ -58,7 +58,7 @@ below it. That works solely because a prompt is never *rendered* in a shell
 that skipped `danger`. Built there, yes; drawn there, no.)
 
 **Which is why `PS1` is not exported.** Every name in it — `ok`, `whatbranch`,
-`batcolor`, `inception`, `` `time` `` — belongs to this repo, and an exported
+`cpucolor`, `inception`, `` `time` `` — belongs to this repo, and an exported
 string outlives all of them. A process that inherits the string without
 inheriting the functions renders `command not found` twice and then hands
 `time` to the bash *keyword*, which times the prompt and prints `real/user/sys`
@@ -66,6 +66,15 @@ into the middle of it. The usual victim is `bash --norc -i` — the exact comman
 this file tells you to test with. Anything that sources `bashrc` builds its own
 copy and needs no export, so **don't add one back** without a reason that
 survives that paragraph.
+
+**Anything `PS1` calls runs in a subshell.** Every `` `name` `` in the string is
+a command substitution, so a prompt function cannot remember anything in a
+variable — each render gets a fresh copy and every assignment it makes dies
+with it. A prompt function that compares *now* against *last time* has to keep
+its sample somewhere the subshell doesn't own: `cpucolor` writes one file per
+shell under `$XDG_RUNTIME_DIR`. This fails quietly and looks like it works —
+the function still returns an answer, it just answers the since-boot question
+forever and the prompt never changes.
 
 ### Never let a bare `sudo` run non-interactively
 
@@ -86,7 +95,7 @@ above it, which is why agents kept hanging on `cp -i` and tripping faillock.
 |---|---|---|
 | `cp` | `cp -i` | **hangs forever** on a y/n that never comes |
 | `mv` | `mv -i` | same |
-| `ls` | `ls_or_cat` | a function, not `ls` |
+| `ls` | `ls --color=auto` | forces colour; shadows the real binary |
 | `cat` | `cat_or_ls` | a function, not `cat` |
 | `cd` | `cd+` | wrapped |
 | `grep` | `grep --exclude-dir=.git --exclude-dir=node_modules` | **silently** skips both — hides the stray `node_modules` that would have explained your bug |
@@ -105,6 +114,17 @@ were `sudo`-aliased until 2026-07-29 and were removed for causing the lockouts.
 a real binary or a shell builtin, or the body says `sudo`, it goes in `danger`.
 Both files say so in their headers — keep it that way, or agent shells start
 breaking again in ways nobody will connect back to this repo.
+
+**When one of these goes missing, it goes back into `danger` — not `aliases`.**
+The symptom is a name that quietly stopped being wrapped: `cd` no longer
+running `cd+`, `ls` with no colour. The reflex is to re-add the alias to
+whichever file is already open, and `aliases` is the wrong one — it sits above
+the guard and may only define new names, so a shadowing alias parked there
+trips the invariant above *and* leaks the wrapper into every script and agent
+shell. `tests/run` covers both halves: the "interactive only" section fails
+when the wrapper is missing, "the guard" fails when the fix landed in the
+wrong file. Run it before hand-patching an alias, and the table above will
+tell you which file the name is supposed to live in.
 
 ### a filter that isn't this repo's doing
 
@@ -262,7 +282,7 @@ Prefer either over the bare command.
 | file | what |
 |---|---|
 | `bashrc` | entry point; sources the rest in the order above |
-| `functions` | the bulk of it (~15K) — `cd+`, `tryhard`, `setadd`, `ls_or_cat`, `ok`, `batcolor`, `inception`, `screenshot` |
+| `functions` | the bulk of it (~15K) — `cd+`, `tryhard`, `setadd`, `ls_or_cat`, `ok`, `cpucolor`, `inception`, `screenshot` |
 | `exports` | `PATH`, `NODE_PATH`, escape hatches, colours, `PS1` |
 | `aliases` | **new names only** — `la`, `wifi`, `stop`, `desktop`, `vimrc`, `tree~`. above the guard, so these reach scripts and agents |
 | `shortcuts` | one- and two-letter aliases (`g`, `t`, `v`, `n`, `:q`, `:e`) |
