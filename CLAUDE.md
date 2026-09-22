@@ -164,6 +164,14 @@ the time. **`ssh-add -l` tells them apart, so run it first:**
 | *"The agent has no identities"* | agent is fine, the key aged out — `~/.ssh/config` sets `AddKeysToAgent 24h` | a human runs `ssh-add`; nothing else can |
 | lists a key | neither; look elsewhere | — |
 
+**The table is for ivy.** A box with no agent at all (the server) also says
+*"Could not open a connection"*, and there is no socket to point at — but
+`~/.ssh/config` names an `IdentityFile`, and ssh uses it with no agent. Run
+`ssh -T git@github.com` before reaching for the socket: it tells you whether
+you can push *and* which account you are. That matters because there are two
+(`4strid`, the old one the remote still names, and `astridivy`), and a key
+that authenticates fine as the wrong one still fails the push.
+
 The second one is not fixable from an agent shell and no amount of retrying
 changes it: adding a key needs the passphrase, which needs a human at a
 terminal. Say so and hand it over rather than burning turns on it. A session
@@ -308,7 +316,19 @@ globally-installed modules; without it `require("@eslint/js")` fails.
 - Commit messages are lowercase, informal, and explain *why*.
 - Old commits carry an older email on purpose — **never rewrite history to
   normalize author identity.** It was true when written.
-- `.claude/` is gitignored.
+- `.claude/worktrees` and `.claude/.cache` are gitignored; the rest of
+  `.claude/` is not.
+
+## Branches
+
+`master` is what ivy runs. `serverside` is the server's, and carries things
+that only make sense there — a prompt that reads iv/os letters (`whatbrain`,
+`tags`), `PATH` entries for `/ivy`, `/anima`, `./bin` — alongside general work
+done while sitting on it. Bringing that work home is a **cherry-pick, never a
+merge**: `serverside` history also has commits that are broken on their own
+(conflict markers, a gutted `danger`) and only fixed later in the branch.
+Pick the general commits onto `origin/master`, keep the ivy prompt (`\h`
+after the `@`), and run `tests/run` before pushing.
 
 ## The machine
 
